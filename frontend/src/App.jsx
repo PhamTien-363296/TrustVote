@@ -1,12 +1,13 @@
 
 import './App.css'
+import { Signup } from './pages/auth/Signup'
 
 function App() {
   
 
   return (
     <>
-  <div className='font-bold bg-green-100'>Hello Cheo</div>
+  <Signup/>
     </>
   )
 }
