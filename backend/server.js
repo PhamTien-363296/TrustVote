@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectMongoDB from "./db/connectMongoDB.js";
 import cors from "cors";
-
+import authRoutes from "./routes/auth.route.js"
 
 dotenv.config();
 
@@ -33,6 +33,8 @@ app.get("/", (req, res) => {
     res.send("Xin chào bạn");
 });
 
+
+app.use("/api/auth",authRoutes )
 
 
 app.listen(5000, () => {
