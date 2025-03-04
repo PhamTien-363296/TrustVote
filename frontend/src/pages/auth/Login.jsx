@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { FaEnvelope, FaLock } from "react-icons/fa";
+import {  FaLock } from "react-icons/fa";
+import { FaAddressCard } from "react-icons/fa";
 
 export const Login = () => {
   const [form, setForm] = useState({ email: "", matKhau: "" });
@@ -34,16 +35,16 @@ export const Login = () => {
         {error && <p className="text-red-500 text-center mb-4">{error}</p>} 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2 font-medium text-left">Email</label>
+            <label className="block text-gray-700 mb-2 font-medium text-left">Căn cước công dân (CCCD)</label>
             <div className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 focus-within:ring-2 ring-blue-400">
-              <FaEnvelope className="text-gray-500" />
+              <FaAddressCard className="text-gray-500" />
               <input
-                type="email"
-                name="email"
+                type="text"
+                name="cccd"
                 value={form.email}
                 onChange={handleChange}
                 className="w-full pl-2 outline-none bg-transparent"
-                placeholder="Nhập email"
+                placeholder="Nhập cccd"
                 required
               />
             </div>
@@ -71,7 +72,7 @@ export const Login = () => {
           </button>
         </form>
         <p className="text-center text-gray-600 mt-4">
-          Bạn chưa có tài khoản? <a href="/signup" className="text-purple-500 hover:underline">Đăng ký</a>
+          <a href="/activate-account" className="text-purple-500 hover:underline">Kích hoạt tài khoản</a>
         </p>
       </div>
     </div>

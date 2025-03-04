@@ -1,11 +1,16 @@
 
 import './App.css'
 import { Login } from './pages/auth/Login'
-import { Signup } from './pages/auth/Signup'
 import { Home } from './pages/Home'
 import axios from 'axios'
 import {useQuery} from '@tanstack/react-query'
 import { Routes ,Route,Navigate} from "react-router-dom";
+import ActivateAccountPage from './pages/ActivateAccountPage'
+import { AuthorizePage } from './pages/AuthorizePage'
+import HomePage from '../../admin/src/pages/HomePage'
+import SetPasswordPage from './pages/SetPasswordPage'
+import VotePage from './pages/VotePage'
+import ResultPage from './pages/ResultPage'
 
 function App() {
   const { data: authUser, isLoading } = useQuery({
@@ -34,10 +39,15 @@ function App() {
 
   return (
     <>
-   <Routes>
-      <Route path="/" element={authUser ?  <Home /> : <Navigate to="/signup" />} />
+    <Routes>
+      <Route path="/" element={authUser ?  <HomePage /> : <Navigate to="/login" />} />
       <Route path="/login" element={!authUser ? <Login /> : <Navigate to="/" />} />
-      <Route path="/signup" element={!authUser ? <Signup /> : <Navigate to="/" />} />
+      <Route path="/activate-account" element={<ActivateAccountPage/>}/>
+      <Route path="/authorize-otp" element={<AuthorizePage/>}/>
+      <Route path="/set-password" element={<SetPasswordPage/>}/>
+      <Route path="/vote" element={<VotePage/>}/>
+      <Route path="/set-password" element={<ResultPage/>}/>
+
     </Routes>
     </>
   )

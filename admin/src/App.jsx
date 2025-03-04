@@ -1,10 +1,14 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-
 import './App.css';
-import { AdminCandidates } from './pages/AdminCandidates';
 import { AdminLogin } from './pages/auth/AdminLogin';
+import HomePage from './pages/HomePage';
+import ElectionUnitsPage from './pages/ElectionUnitsPage';
+import CandidatesPage from './pages/CandidatesPage';
+import ResultPage from './pages/ResultPage';
+import VoterPage from './pages/VoterPage';
+import ElectionPage from './pages/ElectionPage';
 
 function App() {
   const { data: authUser, isLoading } = useQuery({
@@ -32,8 +36,14 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={authUser ? (authUser.roleND === 'admin' ? <AdminCandidates /> : <Navigate to="/login" />) : <Navigate to="/login" />} />
+      <Route path="/" element={authUser ? (authUser.roleND === 'admin' ? <HomePage /> : <Navigate to="/login" />) : <Navigate to="/login" />} />
       <Route path="/login" element={!authUser ? <AdminLogin /> : <Navigate to="/" />} />
+
+      <Route path="/election-list" element={<ElectionPage/>} />
+      <Route path="/election-unit-list" element={<ElectionUnitsPage/>} />
+      <Route path="/candidate-list" element={<CandidatesPage/>} />
+      <Route path="/result-list" element={<ResultPage/>} />
+      <Route path="/voter-list" element={<VoterPage/>} />
     </Routes>
   );
 }
