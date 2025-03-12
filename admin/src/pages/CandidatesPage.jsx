@@ -27,6 +27,9 @@ function CandidatesPage() {
                         <div className='col-span-1 border-r py-4 text-center uppercase'>Xem chi tiết</div>
                         <div className='col-span-1 py-4 text-center uppercase'>Trạng thái</div>
                     </div>
+                    <p>
+                        
+                    </p>
                 </div>
             </div>
         </MainLayout>

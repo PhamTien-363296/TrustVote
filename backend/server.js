@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import connectMongoDB from "./db/connectMongoDB.js";
 import cors from "cors";
 import authRoutes from "./routes/auth.route.js"
+import cutriRoutes from "./routes/cutri.route.js"
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.get("/", (req, res) => {
 
 
 app.use("/api/auth",authRoutes )
+app.use("/api/cutri",cutriRoutes )
 
 
 app.listen(5000, () => {

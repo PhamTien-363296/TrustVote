@@ -52,7 +52,6 @@ export const dangKy = async (req, res) => {
 			res.status(400).json({ error: "Invalid user data" });
 		}
 
-      
     } catch (error) {
         console.log("Lỗi dangKy controller", error.message);
         res.status(500).json({ error: "Lỗi 500" });
@@ -62,41 +61,40 @@ export const dangKy = async (req, res) => {
  
 export const danhNhap = async (req,res)=>{
     try{
-     const {email, matKhau } = req.body
-     const nguoidung = await Nguoidung.findOne({email})
-     const kiemTra_matKhau = await bcrypt.compare(matKhau, nguoidung?.matKhau || "")  
- 
-     if(!email || !kiemTra_matKhau){
-         return res.status(400).json({ error: "Email hoặc mật khẩu không đúng" })
-     }
+        const {email, matKhau } = req.body
+        const nguoidung = await Nguoidung.findOne({email})
+        const kiemTra_matKhau = await bcrypt.compare(matKhau, nguoidung?.matKhau || "")  
+    
+        if(!email || !kiemTra_matKhau){
+            return res.status(400).json({ error: "Email hoặc mật khẩu không đúng" })
+        }
 
-     generateTokenAndSetCookie(nguoidung._id,res)
- 
-     res.status(200).json({
-         email: nguoidung.email,
-         username: nguoidung.username,
-         _id: nguoidung._id,
-         anhDaiDienND : nguoidung.anhDaiDienND
-     })
- 
-    } catch (error) {
-     console.log("Lỗi danhNhap controller",error.message)
-     res.status(500).json({ error: "Lỗi 500" })
+        generateTokenAndSetCookie(nguoidung._id,res)
+    
+        res.status(200).json({
+            email: nguoidung.email,
+            username: nguoidung.username,
+            _id: nguoidung._id,
+            anhDaiDienND : nguoidung.anhDaiDienND
+        })
+    
+        } catch (error) {
+        console.log("Lỗi danhNhap controller",error.message)
+        res.status(500).json({ error: "Lỗi 500" })
+        }
     }
- }
 
- 
- export const dangXuat = async (req,res)=>{
-     try{
-         res.cookie("jwt","",{maxAge:0})
-         res.status(200).json({ message:"Đăng xuất thành công" })
-     } catch (error) {
-         console.log("Lỗi dangXuat controller",error.message)
-         res.status(500).json({ error: "Lỗi 500"})
-     }
- }
 
- 
+export const dangXuat = async (req,res)=>{
+    try{
+        res.cookie("jwt","",{maxAge:0})
+        res.status(200).json({ message:"Đăng xuất thành công" })
+    } catch (error) {
+        console.log("Lỗi dangXuat controller",error.message)
+        res.status(500).json({ error: "Lỗi 500"})
+    }
+}
+
 export const getMe = async(req,res)=>{
     try{
         const nguoidung = await Nguoidung.findById(req.nguoidung._id).select("-matKhau")
