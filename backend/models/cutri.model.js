@@ -24,23 +24,21 @@ const cutriSchema = new mongoose.Schema(
             type: String,
             unique: true,
         },
-        daBau: {
-            type: Boolean,
-            default: false,
-        },
         trangThai: {
             type: String,
             enum: ["Hoạt động", "Khóa", "Tạm dừng"],
             default: "Hoạt động",
         },
-        idDonViBauCu: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "DonViBauCu",
-        },
+        thamGiaBauCu: [
+            {
+                maDotBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DotBauCu" },
+                ngayBau: { type: Date, default: Date.now }
+            }
+        ],
     },
     { timestamps: true }
 );
 
-const Cutri = mongoose.model("Cutri", cutriSchema, "Cutri");
+const CuTri = mongoose.model("CuTri", cutriSchema, "CuTri");
 
-export default Cutri;
+export default CuTri;

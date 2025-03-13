@@ -1,4 +1,4 @@
-import Cutri from "../models/cutri.model.js";
+import CuTri from "../models/cutri.model.js";
 import sendOTP from "../lib/utils/sendOTP.js";
 import { generateOtpToken, verifyOtpToken,generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
 import bcrypt from 'bcryptjs'
@@ -7,12 +7,12 @@ export const themCutri = async (req, res) => {
     try {
         const { hoVaTen, cccd, gmail, matKhau, maDinhDanh } = req.body;
 
-        const cccdTonTai = await Cutri.findOne({ cccd });
+        const cccdTonTai = await CuTri.findOne({ cccd });
         if (cccdTonTai) {
             return res.status(400).json({ message: "CCCD đã tồn tại!" });
         }
 
-        const cutriMoi = new Cutri({
+        const cutriMoi = new CuTri({
             hoVaTen,
             cccd,
             gmail,
@@ -31,7 +31,7 @@ export const layCutriTheoCCCD = async (req, res) => {
     try {
         const { cccd } = req.params;
 
-        const cutri = await Cutri.findOne({ cccd });
+        const cutri = await CuTri.findOne({ cccd });
         if (!cutri) {
             return res.status(404).json({ message: "Tài khoản này chưa được đăng ký" });
         }
@@ -92,7 +92,7 @@ export const capNhatMatKhau = async (req, res) => {
             return res.status(400).json({ error: "Vui lòng cung cấp CCCD và mật khẩu mới" });
         }
 
-        const cutri = await Cutri.findOne({ cccd });
+        const cutri = await CuTri.findOne({ cccd });
         if (!cutri) {
             return res.status(404).json({ error: "Không tìm thấy cử tri với CCCD này" });
         }
@@ -118,7 +118,7 @@ export const danhNhap = async (req, res) => {
     try {
         const { cccd, matKhau } = req.body;
         
-        const cutri = await Cutri.findOne({ cccd });
+        const cutri = await CuTri.findOne({ cccd });
         if (!cutri) {
             return res.status(400).json({ error: "CCCD hoặc mật khẩu không đúng" });
         }
@@ -150,7 +150,7 @@ export const dangXuat = async (req,res)=>{
 
 export const getMe = async(req,res)=>{
     try{
-        const cutri = await Cutri.findById(req.cutri._id).select("-matKhau")
+        const cutri = await CuTri.findById(req.cutri._id).select("-matKhau")
         res.status(200).json(cutri)
     }catch(error){
         console.log("Lỗi getMe controller",error.message)

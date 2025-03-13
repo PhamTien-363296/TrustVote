@@ -1,68 +1,137 @@
 import React from 'react'
 import MainLayout from '../layouts/MainLayout'
 import { useNavigate } from "react-router-dom";
-// import { useState } from "react";
 import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
-
-const electionData = [
-    { id: 1, name: 'Bầu cử đại biểu Quốc hội khóa XII và đại biểu Hội đồng nhân dân (HĐND)', startDate: '05/03/2025', endDate: '05/05/2025', status: 'Đã xác nhận' },
-    { id: 2, name: 'Bầu cử đại biểu Quốc hội khóa XIII và đại biểu Hội đồng nhân dân (HĐND)', startDate: '10/04/2025', endDate: '10/06/2025', status: 'Đã xác nhận' },
-    { id: 3, name: 'Bầu cử đại biểu Quốc hội khóa XIV và đại biểu Hội đồng nhân dân (HĐND)', startDate: '15/05/2025', endDate: '15/07/2025', status: 'Đã xác nhận' },
-    { id: 4, name: 'Bầu cử đại biểu Quốc hội khóa XV và đại biểu Hội đồng nhân dân (HĐND)', startDate: '20/06/2025', endDate: '20/08/2025', status: 'Chưa xác nhận' },
-    { id: 1, name: 'Bầu cử đại biểu Quốc hội khóa XII và đại biểu Hội đồng nhân dân (HĐND)', startDate: '05/03/2025', endDate: '05/05/2025', status: 'Đã xác nhận' },
-    { id: 2, name: 'Bầu cử đại biểu Quốc hội khóa XIII và đại biểu Hội đồng nhân dân (HĐND)', startDate: '10/04/2025', endDate: '10/06/2025', status: 'Đã xác nhận' },
-    { id: 3, name: 'Bầu cử đại biểu Quốc hội khóa XIV và đại biểu Hội đồng nhân dân (HĐND)', startDate: '15/05/2025', endDate: '15/07/2025', status: 'Đã xác nhận' },
-    { id: 4, name: 'Bầu cử đại biểu Quốc hội khóa XV và đại biểu Hội đồng nhân dân (HĐND)', startDate: '20/06/2025', endDate: '20/08/2025', status: 'Chưa xác nhận' },
-    { id: 1, name: 'Bầu cử đại biểu Quốc hội khóa XII và đại biểu Hội đồng nhân dân (HĐND)', startDate: '05/03/2025', endDate: '05/05/2025', status: 'Đã xác nhận' },
-    { id: 2, name: 'Bầu cử đại biểu Quốc hội khóa XIII và đại biểu Hội đồng nhân dân (HĐND)', startDate: '10/04/2025', endDate: '10/06/2025', status: 'Đã xác nhận' },
-    { id: 3, name: 'Bầu cử đại biểu Quốc hội khóa XIV và đại biểu Hội đồng nhân dân (HĐND)', startDate: '15/05/2025', endDate: '15/07/2025', status: 'Đã xác nhận' },
-    { id: 3, name: 'Bầu cử đại biểu Quốc hội khóa XIV và đại biểu Hội đồng nhân dân (HĐND)', startDate: '15/05/2025', endDate: '15/07/2025', status: 'Đã xác nhận' },
-];
-
+import { useState, useEffect } from 'react';
+import { MdClose } from "react-icons/md";
+import axios from "axios";
+import moment from "moment";
 
 function ElectionPage() {
     const navigate = useNavigate();
     const page = 1;
     const tongPages = 1;
+
+    const [moThem, setMoThem] = useState(false)
+    const [dotBauCu, setDotBauCu] = useState({
+        tenDotBauCu: "",
+        ngayBatDau: "",
+        ngayKetThuc: ""
+    }); 
     
+    const [dotBauCuList, setDotBauCuList] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchDotBauCu = async () => {
+            try {
+                const response = await axios.get("/api/dotbaucu/lay");
+                //console.log(response.data)
+                setDotBauCuList(response.data);
+            } catch (err) {
+                setError("Lỗi khi tải dữ liệu!");
+                console.error("Lỗi API:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDotBauCu();
+    }, []);
+
+    if (loading) return <p>Đang tải...</p>;
+    if (error) return <p>{error}</p>;
+
     const handlePageChange = (newPage) => {
         const searchParams = new URLSearchParams(location.search);
             searchParams.set("trang", newPage);
 
         navigate(`${location.pathname}?${searchParams.toString()}`);
     };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setDotBauCu((prev) => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+    
+        try {
+            const response = await axios.post("/api/dotbaucu/them", {
+                tenDotBauCu: dotBauCu.tenDotBauCu,
+                ngayBatDau: new Date(dotBauCu.ngayBatDau),
+                ngayKetThuc: new Date(dotBauCu.ngayKetThuc),
+            });
+    
+            if (response.status === 201) {
+                setDotBauCuList((prev) => [...prev, response.data.dotBauCu]);
+                setMoThem(false);
+                setDotBauCu({
+                    tenDotBauCu: "",
+                    ngayBatDau: "",
+                    ngayKetThuc: ""
+                });
+                alert("Thêm đợt bầu cử thành công!");
+            } else {
+                alert("Có lỗi xảy ra!");
+            }
+        } catch (error) {
+            console.error("Lỗi khi gửi dữ liệu:", error);
+            alert("Lỗi khi gửi dữ liệu lên server!");
+        }
+    };
+    
+
     return (
         <MainLayout>
             <div className='w-full h-full p-3'>
                 <div className='flex justify-between items-center mb-3 cursor-pointer'>
                     <h1 className='text-blue-950 text-4xl font-extrabold'>DANH SÁCH ĐỢT BẦU CỬ</h1>
-                    <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium 
-                    hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'>
+                    <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'
+                        onClick={() => setMoThem(true)}>
                         Thêm
                     </div>
                 </div>
                 <div className='border-2 border-blue-950'>
-                    <div className='w-full bg-blue-950 text-white grid grid-cols-12 items-center font-semibold'>
-                        <div className='col-span-1 text-center border-r py-4 uppercase'>STT</div>
-                        <div className='col-span-6 border-r py-4 text-center uppercase'>Tên đợt bầu cử</div>
+                    <div className='w-full bg-blue-950 text-white grid grid-cols-19 items-center font-semibold'>
+                        <div className='col-span-1 text-center border-r py-4 uppercase'>#</div>
+                        <div className='col-span-2 text-center border-r py-4 uppercase'>Mã</div>
+                        <div className='col-span-7 border-r py-4 text-center uppercase'>Tên đợt bầu cử</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Ngày bắt đầu</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Ngày kết thúc</div>
+                        <div className='col-span-2 border-r py-4 text-center uppercase'>Người tạo</div>
+                        <div className='col-span-2 border-r py-4 text-center uppercase'>Người duyệt</div>
                         <div className='col-span-1 py-4 text-center uppercase'>Trạng thái</div>
                     </div>
-                    {electionData.map((election, index) => (
-                        <div key={election.id} className='w-full shadow-md grid grid-cols-12 items-center border-b odd:bg-gray-100 even:bg-white'>
+                    {dotBauCuList.map((election, index) => (
+                        <div key={election._id} className='w-full shadow-md grid grid-cols-19 items-center border-b odd:bg-gray-100 even:bg-white'>
                             <div className='col-span-1 text-center border-r py-4'>{index + 1}</div>
-                            <div className='col-span-6 border-r py-4 text-center'>{election.name}</div>
-                            <div className='col-span-2 border-r py-4 text-center'>{election.startDate}</div>
-                            <div className='col-span-2 border-r py-4 text-center'>{election.endDate}</div>
+                            <div className='col-span-2 text-center border-r py-4 uppercase'>{election.maDotBauCu}</div>
+                            <div className='col-span-7 border-r py-4 text-center'>{election.tenDotBauCu}</div>
+                            <div className='col-span-2 border-r py-4 text-center'>{moment(election.ngayBatDau).format("DD/MM/YYYY HH:mm:ss")}</div>
+                            <div className='col-span-2 border-r py-4 text-center'>{moment(election.ngayKetThuc).format("DD/MM/YYYY HH:mm:ss")}</div>
+                            <div className='col-span-2 border-r py-4 text-center'>{election.idNguoiTao.username}</div>
+                            <div className='col-span-2 border-r py-4 text-center'>
+                                {election?.idNguoiDuyet?.username ? (
+                                    election.idNguoiDuyet.username
+                                ) : (
+                                    <span className="text-red-500 font-bold">Chưa ai duyệt</span>
+                                )}
+                            </div>
+
                             <div className='col-span-1 py-4 text-center'>
-                                {election.status === 'Chưa xác nhận' ? (
+                                {election.trangThai === 'Chờ xét duyệt' ? (
                                     <button className='bg-orange-600 text-white text-sm font-medium px-3 py-1 rounded-md cursor-pointer
                                     hover:bg-orange-700 transition-all duration-300 ease-in-out shadow-md'>
-                                        Xác nhận
+                                        Duyệt
                                     </button>
                                 ) : (
-                                    <span className='text-green-600 font-medium'>{election.status}</span>
+                                    <span className='text-green-600 font-medium'>{election.trangThai}</span>
                                 )}
                             </div>
                         </div>
@@ -91,6 +160,62 @@ function ElectionPage() {
                     </button>
                 </div>
             </div>
+
+            {moThem && (
+                <div className='fixed top-0 left-0 bg-black/50 w-full h-full flex items-center justify-center'>
+                    <div className='bg-white w-150 h-fit relative p-7'>
+                        <button className="absolute top-0 right-0 text-lg py-2 px-3 text-center cursor-pointer hover:bg-red-500 hover:text-white"
+                            onClick={
+                                () => {setMoThem(false);
+                                    setDotBauCu({
+                                        tenDotBauCu: "",
+                                        ngayBatDau: "",
+                                        ngayKetThuc: ""
+                                    });
+                                }}
+                            >
+                            <MdClose />
+                        </button>
+                        <h1 className="text-2xl font-bold text-blue-900 text-center mb-4">TẠO ĐỢT BẦU CỬ MỚI</h1>
+
+                        <form onSubmit={handleSubmit} className="space-y-2">
+                            <div>
+                                <label className="block font-medium mb-2">Tên đợt bầu cử:</label>
+                                <input 
+                                    type="text" 
+                                    name="tenDotBauCu"
+                                    value={dotBauCu.tenDotBauCu}
+                                    onChange={handleChange}
+                                    className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                            </div>
+                            <div className='flex justify-between gap-3 mt-4'>
+                                <div className='w-full'>
+                                    <label className="block font-medium mb-2">Ngày bắt đầu:</label>
+                                    <input 
+                                        type="datetime-local" 
+                                        name="ngayBatDau"
+                                        value={dotBauCu.ngayBatDau}
+                                        onChange={handleChange}
+                                        className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div className='w-full'>
+                                    <label className="block font-medium mb-2">Ngày kết thúc:</label>
+                                    <input 
+                                        type="datetime-local" 
+                                        name="ngayKetThuc"
+                                        value={dotBauCu.ngayKetThuc}
+                                        onChange={handleChange}
+                                        className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                            </div>
+
+                            <button type="submit" className="mt-5 w-full bg-blue-800 text-white py-2 rounded-lg cursor-pointer hover:bg-blue-900 transition">
+                                Thêm đợt bầu cử
+                            </button>
+                        </form>                    
+                    </div>
+                </div>
+            )}
         </MainLayout>
     )
 }
