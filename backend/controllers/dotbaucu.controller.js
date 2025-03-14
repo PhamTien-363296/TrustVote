@@ -76,3 +76,13 @@ export const xetDuyetDotBauCu = async (req, res) => {
         res.status(500).json({ message: "Lỗi server!", error: error.message });
     }
 };
+
+export const layDotBauCuChuaDienRa = async (req, res) => {
+    try {
+        const dotBauCuList = await DotBauCu.find({ trangThai: "Chưa diễn ra" });
+        res.status(200).json(dotBauCuList);
+    } catch (error) {
+        res.status(500).json({ message: "Lỗi khi lấy danh sách đợt bầu cử chưa diễn ra!", error });
+    }
+};
+

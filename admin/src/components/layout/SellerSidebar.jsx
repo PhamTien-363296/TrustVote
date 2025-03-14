@@ -3,10 +3,15 @@ import { IoChatboxEllipsesOutline } from "react-icons/io5";
 import { HiOutlineWallet } from "react-icons/hi2";
 import { AiOutlineProduct } from "react-icons/ai";
 import { MdOutlineLogout } from "react-icons/md";
+import { FaUsers } from "react-icons/fa"; 
+
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 function SellerSidebar() {
+    const { user } = useAuth();
+
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -20,9 +25,26 @@ function SellerSidebar() {
         { to: "/dx", label: "Đăng xuất", icon: <MdOutlineLogout /> },
     ];
 
+    if (user?.roleND === "admin") {
+        menuItems.splice(menuItems.length - 1, 0, { 
+            to: "/user-list", 
+            label: "Người dùng", 
+            icon: <FaUsers /> 
+        });
+    }
+
     return (
         <div className='sidebar bg-blue-950 text-white min-h-screen max-h-full min-w-fit'>
-            <div className='logo h-40'></div>
+            <div className='logo h-40'>
+                {user ? (
+                    <>
+                        <p>Chào, {user.username}!</p>
+                        <p>Chào, {user.roleND}!</p>
+                    </>
+                ) : (
+                    <p>Bạn chưa đăng nhập.</p>
+                )}
+            </div>
 
             <ul>
                 {menuItems.map((item) => (

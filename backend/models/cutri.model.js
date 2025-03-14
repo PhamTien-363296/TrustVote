@@ -11,23 +11,32 @@ const cutriSchema = new mongoose.Schema(
             required: true,
             unique: true,
         },
-        gmail: {
-            type: String,
-            required: true,
-            unique: true,
-        },
         matKhau: {
             type: String,
             minLength: 6,
         },
-        maDinhDanh: {
-            type: String,
-            unique: true,
+        // maDinhDanh: {
+        //     type: String,
+        // },
+        diaChi: {
+            capTinh: {
+                id: { type: String, required: true },
+                ten: { type: String, required: true },
+            },
+            capHuyen: {
+                id: { type: String, required: true },
+                ten: { type: String, required: true },
+            },
+            capXa: {
+                id: { type: String, required: true },
+                ten: { type: String, required: true },
+            },
+            diaChiChiTiet: { type: String, required: true },
         },
         trangThai: {
             type: String,
-            enum: ["Hoạt động", "Khóa", "Tạm dừng"],
-            default: "Hoạt động",
+            enum: ["Chờ xét duyệt", "Từ chối", "Chưa kích hoạt", "Hoạt động", "Khóa", "Tạm dừng"],
+            default: "Chờ xét duyệt",
         },
         thamGiaBauCu: [
             {
@@ -35,6 +44,24 @@ const cutriSchema = new mongoose.Schema(
                 ngayBau: { type: Date, default: Date.now }
             }
         ],
+        idNguoiTao: { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "Nguoidung", 
+            required: true 
+        },
+        thoiGianTao: { 
+            type: Date, 
+            default: Date.now 
+        },
+
+        idNguoiDuyet: { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "Nguoidung", 
+            default: null 
+        },
+        thoiGianDuyet: { 
+            type: Date 
+        },
     },
     { timestamps: true }
 );

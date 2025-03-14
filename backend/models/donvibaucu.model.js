@@ -17,14 +17,17 @@ const donViBauCuSchema = new mongoose.Schema(
             required: true,
         },
 
-        tinhThanh: {
-            type: String,
-            required: true,
+        capTinh: {
+            id: { type: String },
+            ten: { type: String },
         },
-        capHanhChinh: {
-            capHuyen: [String],
-            capXa: [String]
-        },
+        capHuyen: [
+            {
+                id: { type: String },
+                ten: { type: String },
+                _id: false
+            },
+        ],
 
         soDaiBieuDuocBau: {
             type: Number,
@@ -48,7 +51,7 @@ const donViBauCuSchema = new mongoose.Schema(
             type: Date, 
             default: Date.now 
         },
-        
+
         idNguoiDuyet: { 
             type: mongoose.Schema.Types.ObjectId, 
             ref: "Nguoidung", 

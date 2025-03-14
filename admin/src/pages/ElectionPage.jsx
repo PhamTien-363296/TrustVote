@@ -6,8 +6,11 @@ import { useState, useEffect } from 'react';
 import { MdClose } from "react-icons/md";
 import axios from "axios";
 import moment from "moment";
+import { useAuth } from '../context/AuthContext';
 
 function ElectionPage() {
+    const { user } = useAuth();
+    
     const navigate = useNavigate();
     const page = 1;
     const tongPages = 1;
@@ -40,8 +43,8 @@ function ElectionPage() {
         fetchDotBauCu();
     }, []);
 
-    if (loading) return <p>Đang tải...</p>;
-    if (error) return <p>{error}</p>;
+    if (loading) return <MainLayout><p>Đang tải...</p></MainLayout>;
+    if (error) return <MainLayout>{error}</MainLayout>;
 
     const handlePageChange = (newPage) => {
         const searchParams = new URLSearchParams(location.search);
@@ -125,14 +128,14 @@ function ElectionPage() {
                             </div>
 
                             <div className='col-span-1 py-4 text-center'>
-                                {election.trangThai === 'Chờ xét duyệt' ? (
-                                    <button className='bg-orange-600 text-white text-sm font-medium px-3 py-1 rounded-md cursor-pointer
-                                    hover:bg-orange-700 transition-all duration-300 ease-in-out shadow-md'>
-                                        Duyệt
-                                    </button>
-                                ) : (
-                                    <span className='text-green-600 font-medium'>{election.trangThai}</span>
-                                )}
+                            {user?.roleND === "admin" && election.trangThai === "Chờ xét duyệt" ? (
+                                <button className="bg-orange-600 text-white text-sm font-medium px-3 py-1 rounded-md cursor-pointer
+                                    hover:bg-orange-700 transition-all duration-300 ease-in-out shadow-md">
+                                    Duyệt
+                                </button>
+                            ) : (
+                                <span className="text-green-600 font-medium">{election.trangThai}</span>
+                            )}
                             </div>
                         </div>
                     ))}

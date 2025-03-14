@@ -12,8 +12,8 @@ export const themDonViBauCu = async (req, res) => {
         const {
             idDotBauCu,
             tenDonVi,
-            tinhThanh,
-            capHanhChinh,
+            capTinh,
+            capHuyen,
             soDaiBieuDuocBau,
         } = req.body;
         const idNguoiTao = req.nguoidung._id;
@@ -24,8 +24,14 @@ export const themDonViBauCu = async (req, res) => {
             idDotBauCu,
             maDonViBauCu,
             tenDonVi,
-            tinhThanh,
-            capHanhChinh,
+            capTinh: {
+                id: capTinh.id,
+                ten: capTinh.name,
+            },
+            capHuyen: capHuyen.map((huyen) => ({
+                id: huyen.id,
+                ten: huyen.name,
+            })),
             soDaiBieuDuocBau,
             idNguoiTao
         });
@@ -38,6 +44,24 @@ export const themDonViBauCu = async (req, res) => {
         });
     } catch (error) {
         console.error("Lỗi khi thêm đơn vị bầu cử:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ!" });
+    }
+};
+
+export const layDanhSachDonViBauCu = async (req, res) => {
+    try {
+        const danhSachDonVi = await DonViBauCu.find()
+        .populate("idNguoiTao", "username")
+        .populate({
+            path: "idNguoiDuyet",
+            select: "username",
+            match: { _id: { $ne: null } } // Chỉ populate nếu khác null
+        })
+        .sort({ tenDonVi: 1 });
+
+        return res.status(200).json(danhSachDonVi);
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách đơn vị bầu cử:", error);
         return res.status(500).json({ message: "Lỗi máy chủ!" });
     }
 };

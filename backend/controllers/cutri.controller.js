@@ -5,25 +5,61 @@ import bcrypt from 'bcryptjs'
 
 export const themCutri = async (req, res) => {
     try {
-        const { hoVaTen, cccd, gmail, matKhau, maDinhDanh } = req.body;
-
+        const { hoVaTen, cccd, diaChi, diaChiChiTiet } = req.body;
+        console.log(req.body)
+        const idNguoiTao = req.nguoidung._id;
         const cccdTonTai = await CuTri.findOne({ cccd });
         if (cccdTonTai) {
             return res.status(400).json({ message: "CCCD đã tồn tại!" });
         }
-
+        if (!diaChi || !diaChi.capTinh || !diaChi.capHuyen || !diaChi.capXa || !diaChiChiTiet){
+            return res.status(400).json({ message: "Địa chỉ không hợp lệ!" });
+        }
         const cutriMoi = new CuTri({
             hoVaTen,
             cccd,
-            gmail,
-            matKhau,
-            maDinhDanh,
+            idNguoiTao,
+            diaChi: {
+                capTinh: {
+                    id: diaChi.capTinh.id,
+                    ten: diaChi.capTinh.name
+                },
+                capHuyen: {
+                    id: diaChi.capHuyen.id,
+                    ten: diaChi.capHuyen.name
+                },
+                capXa: {
+                    id: diaChi.capXa.id,
+                    ten: diaChi.capXa.name
+                },
+                diaChiChiTiet: diaChiChiTiet
+            }
         });
 
         await cutriMoi.save();
         res.status(201).json({ message: "Thêm cử tri thành công!", cutri: cutriMoi });
     } catch (error) {
         res.status(500).json({ message: "Lỗi server!", error: error.message });
+        console.log( error.message )
+    }
+};
+
+export const layDanhSachCuTri = async (req, res) => {
+    try {
+        const danhSachCuTri = await CuTri.find()
+        .populate("idNguoiTao", "username")
+        .populate({
+            path: "idNguoiDuyet",
+            select: "username",
+            match: { _id: { $ne: null } } // Chỉ populate nếu khác null
+        })
+        .select("-matKhau")
+        .sort({ hoVaTen: 1 });
+
+        return res.status(200).json(danhSachCuTri);
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách cử tri:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ!" });
     }
 };
 
@@ -157,3 +193,34 @@ export const getMe = async(req,res)=>{
         res.status(500).json({error:"Lỗi 500"})
     }
 }
+
+export const xoaCutri = async (req, res) => {
+    try {
+        const { id } = req.params; // Lấy ID cử tri từ URL
+        const idNguoiXoa = req.nguoidung._id; // ID của người gửi yêu cầu
+
+        // Tìm cử tri theo ID
+        const cutri = await CuTri.findById(id);
+        if (!cutri) {
+            return res.status(404).json({ message: "Không tìm thấy cử tri!" });
+        }
+
+        // Kiểm tra quyền xóa
+        if (cutri.idNguoiTao.toString() !== idNguoiXoa.toString()) {
+            return res.status(403).json({ message: "Bạn không có quyền xóa cử tri này!" });
+        }
+
+        // Kiểm tra trạng thái
+        if (cutri.trangThai !== "Chờ xét duyệt" && cutri.trangThai !== "Từ chối") {
+            return res.status(400).json({ message: "Chỉ có thể xóa cử tri khi đang Chờ xét duyệt hoặc Từ chối!" });
+        }
+
+        // Xóa cử tri
+        await CuTri.findByIdAndDelete(id);
+        res.status(200).json({ message: "Xóa cử tri thành công!" });
+
+    } catch (error) {
+        console.error("Lỗi xoaCutri controller:", error.message);
+        res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};

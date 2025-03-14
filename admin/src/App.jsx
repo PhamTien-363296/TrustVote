@@ -36,7 +36,7 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={authUser ? (authUser.roleND === 'admin' ? <HomePage /> : <Navigate to="/login" />) : <Navigate to="/login" />} />
+      <Route path="/" element={authUser ? <HomePage />  : <Navigate to="/login" />} />
       <Route path="/login" element={!authUser ? <AdminLogin /> : <Navigate to="/" />} />
 
       <Route path="/election-list" element={<ElectionPage/>} />
