@@ -9,6 +9,7 @@ import CandidatesPage from './pages/CandidatesPage';
 import ResultPage from './pages/ResultPage';
 import VoterPage from './pages/VoterPage';
 import ElectionPage from './pages/ElectionPage';
+import UserPage from './pages/UserPage';
 
 function App() {
   const { data: authUser, isLoading } = useQuery({
@@ -44,6 +45,10 @@ function App() {
       <Route path="/candidate-list" element={<CandidatesPage/>} />
       <Route path="/result-list" element={<ResultPage/>} />
       <Route path="/voter-list" element={<VoterPage/>} />
+      <Route
+        path="/user-list"
+        element={authUser?.roleND === 'admin' ? <UserPage /> : <Navigate to="/" />}
+      />
     </Routes>
   );
 }

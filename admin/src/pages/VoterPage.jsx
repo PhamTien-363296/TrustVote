@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import MainLayout from '../layouts/MainLayout'
-import { useNavigate } from "react-router-dom";
+//import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { MdClose } from "react-icons/md";
+import { useAuth } from "../context/AuthContext";
 
 function VoterPage() {
-    const navigate = useNavigate();
+    const { user } = useAuth();
+    
+    //const navigate = useNavigate();
     const [cuTriList, setCuTriList] = useState([]);
 
     const [moThem, setMoThem] = useState(false);
@@ -131,7 +134,7 @@ function VoterPage() {
             const response = await axios.post("/api/cutri/them", cuTri);
     
             if (response.status === 200 || response.status === 201) {
-                alert("Thêm đơn vị bầu cử thành công!");
+                alert("Thêm cử tri thành công!");
                 window.location.reload();
                 setMoThem(false);
                 setCapHuyenList([]);
@@ -156,15 +159,28 @@ function VoterPage() {
 
     const handleDelete = async (id) => {
         const isConfirmed = window.confirm("Bạn có chắc chắn muốn xóa cử tri này?");
-        if (!isConfirmed) return; // Nếu chọn "Hủy", không thực hiện xóa
+        if (!isConfirmed) return;
     
         try {
             const response = await axios.delete(`/api/cutri/xoa/${id}`);
-            alert(response.data.message); // Hiển thị thông báo thành công
-            window.location.reload(); // Cập nhật danh sách sau khi xóa
+            alert(response.data.message);
+            window.location.reload();
         } catch (error) {
             console.error("Lỗi khi xóa:", error);
             alert(error.response?.data?.message || "Lỗi khi xóa cử tri!");
+        }
+    };
+
+    const handleUpdate = async (id, trangThaiMoi) => {
+        const isConfirmed = window.confirm("Bạn có chắc chắn muốn cập nhật cử tri này?");
+        if (!isConfirmed) return;
+        try {
+            const response = await axios.put(`/api/cutri/capnhat/${id}`, { trangThaiMoi });
+            alert(response.data.message);
+            window.location.reload();
+        } catch (error) {
+            console.error("Lỗi khi cập nhật:", error);
+            alert(error.response?.data?.message || "Lỗi khi cập nhật cử tri!");
         }
     };
     
@@ -182,30 +198,31 @@ function VoterPage() {
                         hover:bg-blue-800 hover:text-white hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'>
                             Lọc
                         </div>
-                        <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium 
-                        hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'
-                        onClick={() => setMoThem(true)}>
+                        {user?.roleND  === "VOTER_MANAGER" && (
+                        <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'
+                            onClick={() => setMoThem(true)}>
                             Thêm
                         </div>
+                        )}
                     </div>
                 </div>
                 <div className='border-2 border-blue-950'>
                     <div className='w-full bg-blue-950 text-white grid grid-cols-23 items-center font-semibold'>
                         <div className='col-span-1 text-center border-r py-4 uppercase'>#</div>
-                        <div className='col-span-5 border-r py-4 text-center uppercase'>Họ và Tên</div>
+                        <div className='col-span-4 border-r py-4 text-center uppercase'>Họ và Tên</div>
                         <div className='col-span-3 border-r py-4 text-center uppercase'>CCCD</div>
                         <div className='col-span-3 border-r py-4 text-center uppercase'>Địa chỉ</div>
                         <div className='col-span-3 border-r py-4 text-center uppercase'>Khu vực</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Trạng thái</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Người thêm</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Người duyệt</div>
-                        <div className='col-span-2 py-4 text-center uppercase'>Hành động</div>
+                        <div className='col-span-3 py-4 text-center uppercase'>Hành động</div>
                     </div>
                 </div>
                 {cuTriList.map((v, index) => (
                     <div className='w-full shadow-md grid grid-cols-23 items-center border-b odd:bg-gray-100 even:bg-white'>
                         <div className='col-span-1 text-center border-r py-4'>{index + 1}</div>
-                        <div className='col-span-5 border-r py-4 text-center'>{v.hoVaTen}</div>
+                        <div className='col-span-4 border-r py-4 text-center'>{v.hoVaTen}</div>
                         <div className='col-span-3 border-r py-4 text-center'>{v.cccd}</div>
                         <div className='col-span-3 border-r py-4 text-center'>{v.diaChi.diaChiChiTiet}</div>
                         <div className='col-span-3 border-r py-4 pl-2 flex flex-col'>
@@ -222,30 +239,37 @@ function VoterPage() {
                                 <span className="text-red-500 font-bold">Chưa ai duyệt</span>
                             )}
                         </div>
-                        <div className='col-span-2 py-4 text-center'>
-                            {v.trangThai === 'Chờ xét duyệt' && (
-                                <>
-                                    <div className="flex gap-1 justify-center items-center">
-                                        <button className="bg-green-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
-                                            hover:bg-green-700 transition-all duration-300 ease-in-out shadow-md">
-                                            Duyệt
-                                        </button>
-                                        <button className="bg-red-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
-                                            hover:bg-red-700 transition-all duration-300 ease-in-out shadow-md">
-                                            Từ chối
-                                        </button>
-                                        
-                                    </div>
-                                    <button className="text-red-500 text-sm font-medium rounded-md cursor-pointer"  onClick={() => handleDelete(v._id)}>
-                                        Xóa
-                                    </button>
-                                </>
-                            )}
-                            {v.trangThai === 'Từ chối' && (
-                                <button className="text-red-500 text-sm font-medium rounded-md cursor-pointer ">
+                        <div className='col-span-3 py-4 text-center'>
+                        {user?.roleND === "ELECTION_VERIFIER" && v.trangThai === "Chờ xét duyệt" ? (
+                            <div className="flex gap-1 justify-center items-center">
+                                <button className="bg-green-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
+                                    hover:bg-green-700 transition-all duration-300 ease-in-out shadow-md"
+                                    onClick={() => handleUpdate(v._id, "Chưa kích hoạt")}>
+                                    Duyệt
+                                </button>
+                                <button className="bg-red-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
+                                    hover:bg-red-700 transition-all duration-300 ease-in-out shadow-md"
+                                    onClick={() => handleUpdate(v._id, "Từ chối")}>
+                                    Từ chối
+                                </button>
+                            </div>
+                        ) : user?._id?.toString() === v?.idNguoiTao?._id?.toString() && 
+                        (v.trangThai === "Chờ xét duyệt" || v.trangThai === "Từ chối") ? (
+                            <>
+                                <span className="text-green-600 font-medium">{v.trangThai}</span>
+                                <button 
+                                    className="ml-3 text-red-500 text-sm font-medium rounded-md cursor-pointer mt-2 
+                                        transition-all duration-300 ease-in-out 
+                                        hover:text-red-700 hover:scale-105 
+                                        active:scale-95"
+                                    onClick={() => handleDelete(v._id)}
+                                >
                                     Xóa
                                 </button>
-                            )}
+                            </>
+                        ) : (
+                            <span className="text-green-600 font-medium">{v.trangThai}</span>
+                        )}
                         </div>
                     </div>
                 ))}

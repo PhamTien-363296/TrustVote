@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { MdClose } from "react-icons/md";
 import axios from "axios";
 import MainLayout from "../layouts/MainLayout";
-import moment from "moment";
 import { useAuth } from "../context/AuthContext";
 
 function ElectionUnitsPage() {
     const { user } = useAuth();
     
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const [donViBauCuList, setDonViBauCuList] = useState([]);
     
     const [moThem, setMoThem] = useState(false);
@@ -150,6 +149,7 @@ function ElectionUnitsPage() {
                     tinhThanh: null,
                     capHuyen: [],
                 }));
+                window.location.reload();
             } else {
                 alert("Có lỗi xảy ra, vui lòng thử lại!");
             }
@@ -158,6 +158,34 @@ function ElectionUnitsPage() {
             alert("Lỗi kết nối đến server!");
         }
     };   
+
+    
+    const handleDelete = async (id) => {
+        const isConfirmed = window.confirm("Bạn có chắc chắn muốn xóa cử tri này?");
+        if (!isConfirmed) return;
+    
+        try {
+            const response = await axios.delete(`/api/donvi/xoa/${id}`);
+            alert(response.data.message);
+            window.location.reload();
+        } catch (error) {
+            console.error("Lỗi khi xóa:", error);
+            alert(error.response?.data?.message || "Lỗi khi xóa cử tri!");
+        }
+    };
+
+    const handleUpdate = async (id, trangThaiMoi) => {
+        const isConfirmed = window.confirm("Bạn có chắc chắn muốn cập nhật đơn vị này?");
+        if (!isConfirmed) return;
+        try {
+            const response = await axios.put(`/api/donvi/capnhat/${id}`, { trangThaiMoi });
+            alert(response.data.message);
+            window.location.reload();
+        } catch (error) {
+            console.error("Lỗi khi cập nhật:", error);
+            alert(error.response?.data?.message || "Lỗi khi cập nhật đơn vị!");
+        }
+    };
     
     if (loading) return <MainLayout><p>Đang tải...</p></MainLayout>;
 
@@ -218,13 +246,12 @@ function ElectionUnitsPage() {
                                 </div>
                             )}
                         </div>
-                        <div
-                            className="rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium 
-                            hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out"
-                            onClick={() => setMoThem(true)}
-                        >
+                        {user?.roleND  === "DISTRICT_MANAGER" && (
+                        <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'
+                            onClick={() => setMoThem(true)}>
                             Thêm
                         </div>
+                        )}
                     </div>
                 </div>
                 <div className="border-2 border-blue-950">
@@ -264,29 +291,36 @@ function ElectionUnitsPage() {
                                 </div>
 
                                 <div className="col-span-2 py-4 text-center">
-                                    {user?.roleND === "admin" && election.trangThai === "Chờ xét duyệt" ? (
-                                        <div className="flex gap-1 justify-center items-center">
-                                            <button className="bg-green-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
-                                                hover:bg-green-700 transition-all duration-300 ease-in-out shadow-md">
-                                                Duyệt
-                                            </button>
-                                            <button className="bg-red-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
-                                                hover:bg-red-700 transition-all duration-300 ease-in-out shadow-md">
-                                                Từ chối
-                                            </button>
-                                        </div>
-                                    ) : (
+                                {user?.roleND === "ELECTION_VERIFIER" && election.trangThai === "Chờ xét duyệt" ? (
+                                    <div className="flex gap-1 justify-center items-center">
+                                        <button className="bg-green-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
+                                            hover:bg-green-700 transition-all duration-300 ease-in-out shadow-md"
+                                            onClick={() => handleUpdate(election._id, "Chưa diễn ra")}>
+                                            Duyệt
+                                        </button>
+                                        <button className="bg-red-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
+                                            hover:bg-red-700 transition-all duration-300 ease-in-out shadow-md"
+                                            onClick={() => handleUpdate(election._id, "Từ chối")}>
+                                            Từ chối
+                                        </button>
+                                    </div>
+                                ) : user?._id?.toString() === election?.idNguoiTao?._id?.toString() && 
+                                (election.trangThai === "Chờ xét duyệt" || election.trangThai === "Từ chối") ? (
+                                    <>
                                         <span className="text-green-600 font-medium">{election.trangThai}</span>
-                                    )}
-
-                                    {user?._id?.toString() === election?.idNguoiDuyet?._id?.toString() && election.trangThai === "Chờ xét duyệt" && ( 
                                         <button 
-                                            className="text-red-500 text-sm font-medium rounded-md cursor-pointer mt-2"
+                                            className="ml-3 text-red-500 text-sm font-medium rounded-md cursor-pointer mt-2 
+                                                transition-all duration-300 ease-in-out 
+                                                hover:text-red-700 hover:scale-105 
+                                                active:scale-95"
                                             onClick={() => handleDelete(election._id)}
                                         >
                                             Xóa
                                         </button>
-                                    )}
+                                    </>
+                                ) : (
+                                    <span className="text-green-600 font-medium">{election.trangThai}</span>
+                                )}
                                 </div>
                             </div>
                         ))

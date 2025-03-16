@@ -80,6 +80,7 @@ function ElectionPage() {
                     ngayKetThuc: ""
                 });
                 alert("Thêm đợt bầu cử thành công!");
+                window.location.reload();
             } else {
                 alert("Có lỗi xảy ra!");
             }
@@ -88,20 +89,49 @@ function ElectionPage() {
             alert("Lỗi khi gửi dữ liệu lên server!");
         }
     };
+
     
+    const handleDelete = async (id) => {
+        const isConfirmed = window.confirm("Bạn có chắc chắn muốn xóa cử tri này?");
+        if (!isConfirmed) return;
+    
+        try {
+            const response = await axios.delete(`/api/dotbaucu/xoa/${id}`);
+            alert(response.data.message);
+            window.location.reload();
+        } catch (error) {
+            console.error("Lỗi khi xóa:", error);
+            alert(error.response?.data?.message || "Lỗi khi xóa cử tri!");
+        }
+    };
+    
+    const handleUpdate = async (id, trangThaiMoi) => {
+        const isConfirmed = window.confirm("Bạn có chắc chắn muốn cập nhật đợt này?");
+        if (!isConfirmed) return;
+        try {
+            const response = await axios.put(`/api/dotbaucu/capnhat/${id}`, { trangThaiMoi });
+            alert(response.data.message);
+            window.location.reload();
+        } catch (error) {
+            console.error("Lỗi khi cập nhật:", error);
+            alert(error.response?.data?.message || "Lỗi khi cập nhật đợt bầu cử!");
+        }
+    };
 
     return (
         <MainLayout>
             <div className='w-full h-full p-3'>
                 <div className='flex justify-between items-center mb-3 cursor-pointer'>
                     <h1 className='text-blue-950 text-4xl font-extrabold'>DANH SÁCH ĐỢT BẦU CỬ</h1>
-                    <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'
-                        onClick={() => setMoThem(true)}>
-                        Thêm
-                    </div>
+                    {user?.roleND  === "ELECTION_CREATOR" && (
+                        <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'
+                            onClick={() => setMoThem(true)}>
+                            Thêm
+                        </div>
+                    )}
                 </div>
                 <div className='border-2 border-blue-950'>
-                    <div className='w-full bg-blue-950 text-white grid grid-cols-19 items-center font-semibold'>
+                    <div className='w-full bg-blue-950 text-white grid grid-cols-20 items-center font-semibold'>
                         <div className='col-span-1 text-center border-r py-4 uppercase'>#</div>
                         <div className='col-span-2 text-center border-r py-4 uppercase'>Mã</div>
                         <div className='col-span-7 border-r py-4 text-center uppercase'>Tên đợt bầu cử</div>
@@ -109,10 +139,10 @@ function ElectionPage() {
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Ngày kết thúc</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Người tạo</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Người duyệt</div>
-                        <div className='col-span-1 py-4 text-center uppercase'>Trạng thái</div>
+                        <div className='col-span-2 py-4 text-center uppercase'>Trạng thái</div>
                     </div>
                     {dotBauCuList.map((election, index) => (
-                        <div key={election._id} className='w-full shadow-md grid grid-cols-19 items-center border-b odd:bg-gray-100 even:bg-white'>
+                        <div key={election._id} className='w-full shadow-md grid grid-cols-20 items-center border-b odd:bg-gray-100 even:bg-white'>
                             <div className='col-span-1 text-center border-r py-4'>{index + 1}</div>
                             <div className='col-span-2 text-center border-r py-4 uppercase'>{election.maDotBauCu}</div>
                             <div className='col-span-7 border-r py-4 text-center'>{election.tenDotBauCu}</div>
@@ -127,12 +157,34 @@ function ElectionPage() {
                                 )}
                             </div>
 
-                            <div className='col-span-1 py-4 text-center'>
-                            {user?.roleND === "admin" && election.trangThai === "Chờ xét duyệt" ? (
-                                <button className="bg-orange-600 text-white text-sm font-medium px-3 py-1 rounded-md cursor-pointer
-                                    hover:bg-orange-700 transition-all duration-300 ease-in-out shadow-md">
-                                    Duyệt
-                                </button>
+                            <div className='col-span-2 py-4 text-center'>
+                            {user?.roleND === "ELECTION_VERIFIER" && election.trangThai === "Chờ xét duyệt" ? (
+                                <div className="flex gap-1 justify-center items-center">
+                                    <button className="bg-green-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
+                                        hover:bg-green-700 transition-all duration-300 ease-in-out shadow-md"
+                                        onClick={() => handleUpdate(election._id, "Chưa diễn ra")}>
+                                        Duyệt
+                                    </button>
+                                    <button className="bg-red-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
+                                        hover:bg-red-700 transition-all duration-300 ease-in-out shadow-md"
+                                        onClick={() => handleUpdate(election._id, "Từ chối")}>
+                                        Từ chối
+                                    </button>
+                                </div>
+                            ) : user?._id?.toString() === election?.idNguoiTao?._id?.toString() && 
+                            (election.trangThai === "Chờ xét duyệt" || election.trangThai === "Từ chối") ? (
+                                <>
+                                    <span className="text-green-600 font-medium">{election.trangThai}</span>
+                                    <button 
+                                        className="ml-3 text-red-500 text-sm font-medium rounded-md cursor-pointer mt-2 
+                                            transition-all duration-300 ease-in-out 
+                                            hover:text-red-700 hover:scale-105 
+                                            active:scale-95"
+                                        onClick={() => handleDelete(election._id)}
+                                    >
+                                        Xóa
+                                    </button>
+                                </>
                             ) : (
                                 <span className="text-green-600 font-medium">{election.trangThai}</span>
                             )}

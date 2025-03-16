@@ -1,4 +1,6 @@
 import CuTri from "../models/cutri.model.js";
+import NguoiDung from "../models/nguoidung.model.js";
+
 import sendOTP from "../lib/utils/sendOTP.js";
 import { generateOtpToken, verifyOtpToken,generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
 import bcrypt from 'bcryptjs'
@@ -8,6 +10,16 @@ export const themCutri = async (req, res) => {
         const { hoVaTen, cccd, diaChi, diaChiChiTiet } = req.body;
         console.log(req.body)
         const idNguoiTao = req.nguoidung._id;
+
+        const nguoiTao = await NguoiDung.findById(idNguoiTao);
+        if (!nguoiTao) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+        }
+
+        if (nguoiTao.roleND !== "VOTER_MANAGER") {
+            return res.status(403).json({ message: "Bạn không có quyền thêm cử tri!" });
+        }
+
         const cccdTonTai = await CuTri.findOne({ cccd });
         if (cccdTonTai) {
             return res.status(400).json({ message: "CCCD đã tồn tại!" });
@@ -141,6 +153,7 @@ export const capNhatMatKhau = async (req, res) => {
         const matKhauHash = await bcrypt.hash(matKhau, salt);
 
         cutri.matKhau = matKhauHash;
+        cutri.trangThai = "Hoạt động";
         await cutri.save();
 
         res.status(200).json({ message: "Cập nhật mật khẩu thành công!" });
@@ -196,31 +209,69 @@ export const getMe = async(req,res)=>{
 
 export const xoaCutri = async (req, res) => {
     try {
-        const { id } = req.params; // Lấy ID cử tri từ URL
-        const idNguoiXoa = req.nguoidung._id; // ID của người gửi yêu cầu
+        const { id } = req.params;
+        const idNguoiXoa = req.nguoidung._id;
 
-        // Tìm cử tri theo ID
         const cutri = await CuTri.findById(id);
         if (!cutri) {
             return res.status(404).json({ message: "Không tìm thấy cử tri!" });
         }
 
-        // Kiểm tra quyền xóa
         if (cutri.idNguoiTao.toString() !== idNguoiXoa.toString()) {
             return res.status(403).json({ message: "Bạn không có quyền xóa cử tri này!" });
         }
 
-        // Kiểm tra trạng thái
         if (cutri.trangThai !== "Chờ xét duyệt" && cutri.trangThai !== "Từ chối") {
             return res.status(400).json({ message: "Chỉ có thể xóa cử tri khi đang Chờ xét duyệt hoặc Từ chối!" });
         }
 
-        // Xóa cử tri
         await CuTri.findByIdAndDelete(id);
         res.status(200).json({ message: "Xóa cử tri thành công!" });
 
     } catch (error) {
         console.error("Lỗi xoaCutri controller:", error.message);
+        res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};
+
+export const capNhatTrangThaiCuTri = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { trangThaiMoi } = req.body;
+        const idNguoiDuyet = req.nguoidung._id;
+
+        const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
+        if (!nguoiDuyet) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+        }
+
+        if (nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
+            return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
+        }
+
+        const cuTri = await CuTri.findById(id);
+        if (!cuTri) {
+            return res.status(404).json({ message: "Không tìm thấy cử tri!" });
+        }
+
+        if (cuTri.trangThai !== "Chờ xét duyệt") {
+            return res.status(400).json({
+                message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
+            });
+        }
+
+        cuTri.trangThai = trangThaiMoi;
+        cuTri.idNguoiDuyet = idNguoiDuyet;
+        cuTri.thoiGianDuyet = new Date();
+
+        await cuTri.save();
+
+        res.status(200).json({
+            message: "Cập nhật trạng thái thành công!"
+        });
+
+    } catch (error) {
+        console.error("Lỗi capNhatTrangThaiCuTri controller:", error.message);
         res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
     }
 };
