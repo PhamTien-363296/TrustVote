@@ -1,41 +1,29 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
-import PropTypes from "prop-types";
+import { createContext, useContext, useState } from "react";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+  // Lấy authUser từ localStorage khi app khởi động
+  const [authUser, setAuthUserState] = useState(() => {
+    const storedUser = localStorage.getItem("authUser");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
-    useEffect(() => {
-        const fetchUser = async () => {
-        try {
-            const response = await axios.get("/api/auth/getme",{
-                withCredentials: true,
-            });
-            localStorage.setItem("chat-user", JSON.stringify(response.data));
-            //console.log("Thông tin người dùng", response.data);
-            setUser(response.data);
-        } catch (error) {
-            console.error("Lỗi khi lấy thông tin người dùng", error);
-        } finally {
-            setLoading(false);
-        }
-        };
+  // Cập nhật localStorage mỗi khi authUser thay đổi
+  const setAuthUser = (user) => {
+    setAuthUserState(user);
+    if (user) {
+      localStorage.setItem("authUser", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("authUser");
+    }
+  };
 
-        fetchUser();
-    }, []);
-
-    return (
-        <AuthContext.Provider value={{ user, loading, setUser }}>
-        {children}
-        </AuthContext.Provider>
-    );
-};
-
-AuthProvider.propTypes = {
-    children: PropTypes.node.isRequired,
+  return (
+    <AuthContext.Provider value={{ authUser, setAuthUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => useContext(AuthContext);

@@ -4,16 +4,30 @@ import { HiOutlineWallet } from "react-icons/hi2";
 import { AiOutlineProduct } from "react-icons/ai";
 import { MdOutlineLogout } from "react-icons/md";
 import { FaUsers } from "react-icons/fa"; 
-
-import { useLocation } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 function SellerSidebar() {
-    const { user } = useAuth();
-
+    const { authUser, setAuthUser } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+
+
+const handleLogout = async () => {
+    try {
+        await axios.post("/api/auth/logout", {}, { withCredentials: true });
+
+        setAuthUser(null); 
+        localStorage.removeItem("authUser"); 
+        navigate("/login"); 
+
+    } catch (error) {
+        console.error("Lỗi đăng xuất:", error);
+        alert("Đăng xuất thất bại! Thử lại sau.");
+    }
+};
+
 
     const menuItems = [
         { to: "/", label: "Trang chủ", icon: <BiHome /> },
@@ -22,24 +36,19 @@ function SellerSidebar() {
         { to: "/candidate-list", label: "Ứng cử viên", icon: <HiOutlineWallet /> },
         { to: "/voter-list", label: "Cử tri", icon: <AiOutlineProduct /> },
         { to: "/result-list", label: "Kết quả", icon: <AiOutlineProduct /> },
-        { to: "/dx", label: "Đăng xuất", icon: <MdOutlineLogout /> },
     ];
 
-    if (user?.roleND === "admin") {
-        menuItems.splice(menuItems.length - 1, 0, { 
-            to: "/user-list", 
-            label: "Người dùng", 
-            icon: <FaUsers /> 
-        });
+    if (authUser?.roleND === "ADMIN") {
+        menuItems.push({ to: "/user-list", label: "Người dùng", icon: <FaUsers /> });
     }
 
     return (
         <div className='sidebar bg-blue-950 text-white min-h-screen max-h-full min-w-fit'>
             <div className='logo h-40'>
-                {user ? (
+                {authUser ? (
                     <>
-                        <p>Chào, {user.username}!</p>
-                        <p>Chào, {user.roleND}!</p>
+                        <p>Chào, {authUser.username}!</p>
+                        <p>Chào, {authUser.roleND}!</p>
                     </>
                 ) : (
                     <p>Bạn chưa đăng nhập.</p>
@@ -57,6 +66,14 @@ function SellerSidebar() {
                         {item.icon} {item.label}
                     </li>
                 ))}
+
+            
+                <li
+                    className="flex items-center w-47 gap-2 text-medium !px-7 !py-4 my-3 cursor-pointer hover:bg-red-600 hover:text-white font-bold"
+                    onClick={handleLogout}
+                >
+                    <MdOutlineLogout /> Đăng xuất
+                </li>
             </ul>
         </div>
     );
