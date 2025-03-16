@@ -65,12 +65,13 @@ const ungcuvienSchema = new mongoose.Schema(
             default: null,
         },
         laDaiBieuQH: {
-            type: Boolean,
-            default: false,
+            type: String,
         },
         laDaiBieuHDND: {
-            type: Boolean,
-            default: false,
+            type: String,
+        },
+        txHash: {
+            type: String,
         },
         trangThai: {
             type: String,

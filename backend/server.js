@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.route.js"
 import cutriRoutes from "./routes/cutri.route.js"
 import dotbaucuRoutes from "./routes/dotbaucu.route.js"
 import donviRoutes from "./routes/donvibaucu.route.js"
+import ungcuvienRoutes from "./routes/ungcuvien.route.js"
 
 dotenv.config();
 
@@ -34,6 +35,8 @@ app.use("/api/auth",authRoutes )
 app.use("/api/cutri",cutriRoutes )
 app.use("/api/dotbaucu",dotbaucuRoutes )
 app.use("/api/donvi", donviRoutes )
+app.use("/api/ungcuvien", ungcuvienRoutes )
+
 
 app.listen(5000, () => {
     console.log(`Server is running on port ${PORT}`);
