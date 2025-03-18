@@ -6,9 +6,9 @@ import { MdOutlineLogout } from "react-icons/md";
 import { FaUsers } from "react-icons/fa"; 
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
-function SellerSidebar() {
+function Sidebar() {
     const { authUser, setAuthUser } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
@@ -79,4 +79,4 @@ const handleLogout = async () => {
     );
 }
 
-export default SellerSidebar;
+export default Sidebar;

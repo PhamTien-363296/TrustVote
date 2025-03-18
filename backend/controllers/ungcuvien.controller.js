@@ -3,11 +3,12 @@ import Nguoidung from "../models/nguoidung.model.js";
 import Web3 from "web3";
 import contractABI from "../config/ABI.js";
 import contractAddr from '../config/ContractAddress.js';
+import {v2 as cloudinary} from 'cloudinary'
 
 export const themUngCuVien = async (req, res) => {
     try {
         const {
-            hoVaTen, ngaySinh, gioiTinh, quocTich, danToc, queQuan, noiO,
+            hinhAnh, idDonViBauCu, hoVaTen, ngaySinh, gioiTinh, quocTich, danToc, tonGiao, queQuan, noiO,
             trinhDoHocVan, ngheNghiep, noiCongTac, ngayVaoDang, laDaiBieuQH, laDaiBieuHDND,
         } = req.body;
 
@@ -32,12 +33,27 @@ export const themUngCuVien = async (req, res) => {
             return res.status(400).json({ message: "Địa chỉ quê quán không hợp lệ!" });
         }
 
+        let anhSPUrl = hinhAnh;
+
+        if (hinhAnh) {
+            try {
+                const uploadResult = await cloudinary.uploader.upload(hinhAnh);
+                anhSPUrl = uploadResult.secure_url;
+            } catch (uploadError) {
+                console.log("Lỗi upload ảnh ứng cử viên:", uploadError.message);
+                return res.status(500).json({ error: "Lỗi khi upload ảnh ứng cử viên lên Cloudinary" });
+            }
+        }
+
         const ungCuVienMoi = new UngCuVien({
+            hinhAnh: anhSPUrl,
+            idDonViBauCu,
             hoVaTen,
             ngaySinh,
             gioiTinh,
             quocTich,
             danToc,
+            tonGiao,
             queQuan: {
                 capTinh: {
                     id: queQuan.capTinh.id,
@@ -94,19 +110,63 @@ export const layDanhSachUngCuVien = async (req, res) => {
     }
 };
 
+export const xoaUngCuVien = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const idNguoiXoa = req.nguoidung._id;
+
+        const ungCuVien = await UngCuVien.findById(id);
+        if (!ungCuVien) {
+            return res.status(404).json({ message: "Không tìm thấy ứng cử viên!" });
+        }
+
+        if (ungCuVien.idNguoiTao.toString() !== idNguoiXoa.toString()) {
+            return res.status(403).json({ message: "Bạn không có quyền xóa ứng cử viên này!" });
+        }
+
+        if (ungCuVien.trangThai !== "Chờ xét duyệt" && ungCuVien.trangThai !== "Từ chối") {
+            return res.status(400).json({ message: "Chỉ có thể xóa ứng cử viên khi đang Chờ xét duyệt hoặc Từ chối!" });
+        }
+
+        await UngCuVien.findByIdAndDelete(id);
+        res.status(200).json({ message: "Xóa ứng cử viên thành công!" });
+
+    } catch (error) {
+        console.error("Lỗi xoaUngCuVien controller:", error.message);
+        res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};
+
 export const duyetUngCuVien = async (req, res) => {
     try {
-        // Lấy candidateId từ body
         const { candidateId } = req.body;
+        const idNguoiDuyet = req.nguoidung._id;
 
-        // Tìm ứng cử viên trong MongoDB
+        const nguoiDuyet = await Nguoidung.findById(idNguoiDuyet);
+        if (!nguoiDuyet) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+        }
+
+        if (nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
+            return res.status(403).json({ message: "Bạn không có quyền duyệt ứng cử viên!" });
+        }
+
         const candidate = await UngCuVien.findById(candidateId);
         if (!candidate) {
             return res.status(404).json({ message: "Không tìm thấy ứng cử viên!" });
         }
 
-        // Cập nhật trạng thái duyệt (ví dụ: trạng thái "Chưa diễn ra" hoặc "approved" theo logic của bạn)
+        if (candidate.trangThai !== "Chờ xét duyệt") {
+            return res.status(400).json({
+                message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
+            });
+        }
+
         candidate.trangThai = "Chưa diễn ra";
+        candidate.idNguoiDuyet = idNguoiDuyet;
+        candidate.thoiGianDuyet = new Date();
+
+        await candidate.save();
 
         // Thiết lập kết nối tới Ganache qua Web3 (đảm bảo Ganache đang chạy tại cổng 7545)
         const web3 = new Web3("HTTP://127.0.0.1:7545");
@@ -140,5 +200,66 @@ export const duyetUngCuVien = async (req, res) => {
     } catch (error) {
         console.error("Lỗi duyệt ứng cử viên:", error);
         return res.status(500).json({ message: "Lỗi server!", error: error.message });
+    }
+};
+
+export const layUngCuVienTheoId = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const ungCuVien = await UngCuVien.findById(id)
+            .populate("idNguoiTao", "username")
+            .populate("idNguoiDuyet", "username");
+
+        if (!ungCuVien) {
+            return res.status(404).json({ message: "Không tìm thấy ứng cử viên!" });
+        }
+
+        res.status(200).json(ungCuVien);
+    } catch (error) {
+        console.error("Lỗi khi lấy ứng cử viên theo ID:", error);
+        res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};
+
+export const capNhatTrangThaiUCV = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { trangThaiMoi } = req.body;
+        const idNguoiDuyet = req.nguoidung._id;
+
+        const nguoiDuyet = await Nguoidung.findById(idNguoiDuyet);
+        if (!nguoiDuyet) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+        }
+
+        if (nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
+            return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
+        }
+
+        const ungCuVien = await UngCuVien.findById(id);
+        if (!ungCuVien) {
+            return res.status(404).json({ message: "Không tìm thấy ứng cử viên!" });
+        }
+
+        if (ungCuVien.trangThai !== "Chờ xét duyệt") {
+            return res.status(400).json({
+                message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
+            });
+        }
+
+        ungCuVien.trangThai = trangThaiMoi;
+        ungCuVien.idNguoiDuyet = idNguoiDuyet;
+        ungCuVien.thoiGianDuyet = new Date();
+
+        await ungCuVien.save();
+
+        res.status(200).json({
+            message: "Cập nhật trạng thái thành công!"
+        });
+
+    } catch (error) {
+        console.error("Lỗi capNhatTrangThaiUCV controller:", error.message);
+        res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
     }
 };

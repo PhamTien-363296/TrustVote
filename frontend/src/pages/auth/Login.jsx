@@ -19,6 +19,7 @@ export const Login = () => {
 
     try {
       const response = await axios.post("/api/cutri/login", form);
+      alert("Đăng nhập thành công!");
       if (response.data) {
         navigate("/");
       }

@@ -3,7 +3,7 @@ import MainLayout from '../layouts/MainLayout'
 //import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { MdClose } from "react-icons/md";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext2";
 
 function VoterPage() {
     const { user } = useAuth();
@@ -194,10 +194,10 @@ function VoterPage() {
                 <div className='flex justify-between items-center mb-3 cursor-pointer'>
                     <h1 className='text-blue-950 text-4xl font-extrabold'>DANH SÁCH CỬ TRI</h1>
                     <div className='flex gap-3'>
-                        <div className='rounded-full shadow-lg px-7 py-2 text-blue-950 border-2 bg-slate-100 border-blue-950 w-fit font-medium 
+                        {/* <div className='rounded-full shadow-lg px-7 py-2 text-blue-950 border-2 bg-slate-100 border-blue-950 w-fit font-medium 
                         hover:bg-blue-800 hover:text-white hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'>
                             Lọc
-                        </div>
+                        </div> */}
                         {user?.roleND  === "VOTER_MANAGER" && (
                         <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'
                             onClick={() => setMoThem(true)}>
@@ -236,7 +236,7 @@ function VoterPage() {
                             {v?.idNguoiDuyet?.username ? (
                                 v.idNguoiDuyet.username
                             ) : (
-                                <span className="text-red-500 font-bold">Chưa ai duyệt</span>
+                                <span className="text-gray-400">Chưa ai duyệt</span>
                             )}
                         </div>
                         <div className='col-span-3 py-4 text-center'>
@@ -256,7 +256,20 @@ function VoterPage() {
                         ) : user?._id?.toString() === v?.idNguoiTao?._id?.toString() && 
                         (v.trangThai === "Chờ xét duyệt" || v.trangThai === "Từ chối") ? (
                             <>
-                                <span className="text-green-600 font-medium">{v.trangThai}</span>
+                                <span 
+                                    className={`font-medium ${
+                                        {
+                                            "Chờ xét duyệt": "text-yellow-500",
+                                            "Từ chối": "text-red-500",
+                                            "Chưa kích hoạt": "text-blue-500",
+                                            "Hoạt động": "text-green-600",
+                                            "Tạm dừng": "text-gray-500",
+                                            "Khóa": "text-gray-500"
+                                        }[v.trangThai] || "text-black"
+                                    }`}
+                                >
+                                    {v.trangThai}
+                                </span>
                                 <button 
                                     className="ml-3 text-red-500 text-sm font-medium rounded-md cursor-pointer mt-2 
                                         transition-all duration-300 ease-in-out 
@@ -268,7 +281,19 @@ function VoterPage() {
                                 </button>
                             </>
                         ) : (
-                            <span className="text-green-600 font-medium">{v.trangThai}</span>
+                            <span 
+                                className={`font-medium ${
+                                    {
+                                        "Chờ xét duyệt": "text-yellow-500",
+                                        "Từ chối": "text-red-500",
+                                        "Chưa diễn ra": "text-blue-500",
+                                        "Đang diễn ra": "text-green-600",
+                                        "Đã kết thúc": "text-gray-500"
+                                    }[v.trangThai] || "text-black"
+                                }`}
+                            >
+                                {v.trangThai}
+                            </span>
                         )}
                         </div>
                     </div>

@@ -7,6 +7,8 @@ const ungcuvienSchema = new mongoose.Schema(
         //     required: true,
         //     unique: true, 
         // },
+        idDonViBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DonViBauCu"},
+        hinhAnh: { type: String },
         hoVaTen: {
             type: String,
             required: true,
@@ -28,6 +30,9 @@ const ungcuvienSchema = new mongoose.Schema(
             type: String,
         },
         danToc: {
+            type: String,
+        },
+        tonGiao: {
             type: String,
         },
         queQuan: {
@@ -75,8 +80,8 @@ const ungcuvienSchema = new mongoose.Schema(
         },
         trangThai: {
             type: String,
-            enum: ["Chờ duyệt", "Từ chối", "Chưa diễn ra", "Đang diễn ra", "Đã kết thúc"],
-            default: "Chờ duyệt",
+            enum: ["Chờ xét duyệt", "Từ chối", "Chưa diễn ra", "Đang diễn ra", "Đã kết thúc"],
+            default: "Chờ xét duyệt",
         },
         idNguoiTao: { type: mongoose.Schema.Types.ObjectId, ref: "Nguoidung", required: true },
         thoiGianTao: { type: Date, default: Date.now }, 

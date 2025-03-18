@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { MdClose } from "react-icons/md";
 import axios from "axios";
 import MainLayout from "../layouts/MainLayout";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext2";
 
 function ElectionUnitsPage() {
     const { user } = useAuth();
@@ -12,7 +12,7 @@ function ElectionUnitsPage() {
     const [donViBauCuList, setDonViBauCuList] = useState([]);
     
     const [moThem, setMoThem] = useState(false);
-    const [moChon, setMoChon] = useState(false);
+    // const [moChon, setMoChon] = useState(false);
     const [dotBauCuDaChon, setDotBauCuDaChon] = useState(null);
 
     const [donViBauCu, setDonViBauCu] = useState({
@@ -32,14 +32,37 @@ function ElectionUnitsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    
     useEffect(() => {
+        const layDotBauCu = async () => {
+            try {
+                const response = await axios.get("/api/dotbaucu/lay/daduyet");
+                setDotBauCuList(response.data);
+
+                if (response.data.length > 0) {
+                    const dotBauCuMacDinh = response.data[0];
+                    setDotBauCuDaChon(dotBauCuMacDinh);
+                }
+            } catch (err) {
+                setError("Lỗi khi tải đợt bầu cử!");
+                console.error("Lỗi API:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        layDotBauCu();
+    }, []);
+
+    useEffect(() => {
+        if (!dotBauCuDaChon) return;
+
         const fetchDonViBauCu = async () => {
             try {
-                const response = await axios.get("/api/donvi/lay");
-                //console.log(response.data)
+                const response = await axios.get(`/api/donvi/lay/${dotBauCuDaChon._id}`);
                 setDonViBauCuList(response.data);
             } catch (err) {
-                setError("Lỗi khi tải dữ liệu!");
+                setError("Lỗi khi tải đơn vị bầu cử!");
                 console.error("Lỗi API:", err);
             } finally {
                 setLoading(false);
@@ -47,36 +70,12 @@ function ElectionUnitsPage() {
         };
 
         fetchDonViBauCu();
-    }, []);
+    }, [dotBauCuDaChon]);
 
     const danhSachLoc = donViBauCuList.filter((donVi) =>
         tinhThanhDaChon ? donVi.capTinh.id === tinhThanhDaChon : true
-    );    
+    );
     
-    useEffect(() => {
-        const layDotBauCu = async () => {
-            try {
-                const response = await axios.get("/api/dotbaucu/lay/daduyet");
-                setDotBauCuList(response.data);
-                if (response.data.length > 0) {
-                    const dotBauCuMoiNhat = response.data[response.data.length - 1];
-                    setDotBauCuDaChon(dotBauCuMoiNhat);
-
-                    setDonViBauCu((prev) => ({
-                        ...prev,
-                        idDotBauCu: dotBauCuMoiNhat._id,
-                    }));
-                }
-            } catch (err) {
-                setError("Lỗi khi tải dữ liệu!");
-                console.error("Lỗi API:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        layDotBauCu();
-    }, []);
-
     useEffect(() => {
         const layDanhSachTinhThanh = async () => {
             try {
@@ -212,40 +211,28 @@ function ElectionUnitsPage() {
                             </select>
                         </div>
 
-                        <div className="relative">
-                            <button
-                                className="rounded-full shadow-lg px-7 py-3 border border-blue-950 text-blue-950 w-150 font-medium cursor-pointer hover:bg-blue-950 hover:text-white"
-                                onMouseEnter={() => setMoChon(true)}
-                                onMouseLeave={() => setMoChon(false)}
-                            >
-                                {dotBauCuDaChon?.tenDotBauCu || "Chưa chọn"}
-                            </button>
+                        <select
+                            className="rounded-full shadow-lg px-4 py-2 border border-blue-950 text-blue-950 font-medium cursor-pointer hover:bg-blue-950 hover:text-white"
+                            value={dotBauCuDaChon?._id || ""}
+                            onChange={(e) => {
+                                const dotBauCuMoi = dotBauCuList.find((d) => d._id === e.target.value);
+                                if (dotBauCuMoi) {
+                                    setDotBauCuDaChon(dotBauCuMoi);
+                                    setDonViBauCu((prev) => ({
+                                        ...prev,
+                                        idDotBauCu: dotBauCuMoi._id,
+                                    }));
+                                }
+                            }}
+                        >
+                            <option value="" disabled>Chọn đợt bầu cử</option>
+                            {dotBauCuList.map((d) => (
+                                <option key={d._id} value={d._id}>
+                                    {d.tenDotBauCu}
+                                </option>
+                            ))}
+                        </select>
 
-                            {moChon && (
-                                <div 
-                                    className="absolute right-0 w-150 bg-white shadow-lg rounded-lg !p-2 z-50"
-                                    onMouseEnter={() => setMoChon(true)}
-                                    onMouseLeave={() => setMoChon(false)}
-                                >
-                                    <ul className="max-h-60 overflow-y-auto">
-                                        {dotBauCuList.map((d) => (
-                                            <li key={d._id} 
-                                                className="flex items-center gap-3 !p-2 hover:bg-gray-100 cursor-pointer"
-                                                onClick={() => {
-                                                    setDotBauCuDaChon(d);
-                                                    setDonViBauCu((prev) => ({
-                                                        ...prev,
-                                                        idDotBauCu: d._id,
-                                                    }));
-                                                }}
-                                            >
-                                                {d.tenDotBauCu}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
                         {user?.roleND  === "DISTRICT_MANAGER" && (
                         <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'
                             onClick={() => setMoThem(true)}>
@@ -286,7 +273,7 @@ function ElectionUnitsPage() {
                                     {election?.idNguoiDuyet?.username ? (
                                         election.idNguoiDuyet.username
                                     ) : (
-                                        <span className="text-red-500 font-bold">Chưa ai duyệt</span>
+                                        <span className="text-gray-400">Chưa ai duyệt</span>
                                     )}
                                 </div>
 
@@ -307,7 +294,19 @@ function ElectionUnitsPage() {
                                 ) : user?._id?.toString() === election?.idNguoiTao?._id?.toString() && 
                                 (election.trangThai === "Chờ xét duyệt" || election.trangThai === "Từ chối") ? (
                                     <>
-                                        <span className="text-green-600 font-medium">{election.trangThai}</span>
+                                        <span 
+                                            className={`font-medium ${
+                                                {
+                                                    "Chờ xét duyệt": "text-yellow-500",
+                                                    "Từ chối": "text-red-500",
+                                                    "Chưa diễn ra": "text-blue-500",
+                                                    "Đang diễn ra": "text-green-600",
+                                                    "Đã kết thúc": "text-gray-500"
+                                                }[election.trangThai] || "text-black"
+                                            }`}
+                                        >
+                                            {election.trangThai}
+                                        </span>
                                         <button 
                                             className="ml-3 text-red-500 text-sm font-medium rounded-md cursor-pointer mt-2 
                                                 transition-all duration-300 ease-in-out 
@@ -319,7 +318,19 @@ function ElectionUnitsPage() {
                                         </button>
                                     </>
                                 ) : (
-                                    <span className="text-green-600 font-medium">{election.trangThai}</span>
+                                    <span 
+                                        className={`font-medium ${
+                                            {
+                                                "Chờ xét duyệt": "text-yellow-500",
+                                                "Từ chối": "text-red-500",
+                                                "Chưa diễn ra": "text-blue-500",
+                                                "Đang diễn ra": "text-green-600",
+                                                "Đã kết thúc": "text-gray-500"
+                                            }[election.trangThai] || "text-black"
+                                        }`}
+                                    >
+                                        {election.trangThai}
+                                    </span>
                                 )}
                                 </div>
                             </div>

@@ -62,13 +62,51 @@ export const themDonViBauCu = async (req, res) => {
 export const layDanhSachDonViBauCu = async (req, res) => {
     try {
         const danhSachDonVi = await DonViBauCu.find()
-        .populate("idNguoiTao", "username")
-        .populate({
-            path: "idNguoiDuyet",
-            select: "username",
-            match: { _id: { $ne: null } } // Chỉ populate nếu khác null
-        })
-        .sort({ tenDonVi: 1 });
+            .populate("idNguoiTao", "username")
+            .populate({
+                path: "idNguoiDuyet",
+                select: "username",
+                match: { _id: { $ne: null } }
+            })
+            .sort({ tenDonVi: 1 });
+
+        console.log(danhSachDonVi)
+        return res.status(200).json(danhSachDonVi);
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách đơn vị bầu cử:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ!" });
+    }
+};
+
+export const layDanhSachDonViBauCuTheoDot = async (req, res) => {
+    try {
+        const { idDotBauCu } = req.params;
+
+        if (!idDotBauCu) {
+            return res.status(400).json({ message: "Thiếu idDotBauCu!" });
+        }
+
+        const danhSachDonVi = await DonViBauCu.find({ idDotBauCu: idDotBauCu })
+            .populate("idNguoiTao", "username")
+            .populate({
+                path: "idNguoiDuyet",
+                select: "username",
+                match: { _id: { $ne: null } }
+            })
+            .sort({ tenDonVi: 1 });
+
+        console.log(danhSachDonVi)
+        return res.status(200).json(danhSachDonVi);
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách đơn vị bầu cử:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ!" });
+    }
+};
+
+export const layDanhSachDonViBauCuCDR = async (req, res) => {
+    try {
+        const danhSachDonVi = await DonViBauCu.find({ trangThai: "Chưa diễn ra" })
+            .sort({ tenDonVi: 1 });
 
         return res.status(200).json(danhSachDonVi);
     } catch (error) {
@@ -76,6 +114,7 @@ export const layDanhSachDonViBauCu = async (req, res) => {
         return res.status(500).json({ message: "Lỗi máy chủ!" });
     }
 };
+
 
 export const xoaDonViBauCu = async (req, res) => {
     try {

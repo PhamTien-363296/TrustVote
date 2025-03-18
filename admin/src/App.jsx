@@ -26,7 +26,7 @@ function App() {
       <Route path="/voter-list" element={<VoterPage/>} />
       <Route
         path="/user-list"
-        element={authUser?.roleND === 'admin' ? <UserPage /> : <Navigate to="/" />}
+        element={authUser?.roleND === 'ADMIN' ? <UserPage /> : <Navigate to="/" />}
       />
     </Routes>
   );

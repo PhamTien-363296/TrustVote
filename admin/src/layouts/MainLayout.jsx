@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types';
-import SellerSidebar from '../components/layout/SellerSidebar';
+import Sidebar from '../components/Sidebar';
 
 const MainLayout = ({ children }) => {
     return (
         <div className='main-seller-layout flex bg-slate-100 overflow-x-auto h-full'>
-            <SellerSidebar/>
+            <Sidebar/>
             <div className='seller-content flex flex-col flex-1 overflow-x-auto'>
                 <div className='bg-blue-950 h-3 w-full'></div>
                 {children}

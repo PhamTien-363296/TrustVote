@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { MdClose } from "react-icons/md";
 import axios from "axios";
 import moment from "moment";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext2';
 
 function ElectionPage() {
     const { user } = useAuth();
@@ -153,7 +153,7 @@ function ElectionPage() {
                                 {election?.idNguoiDuyet?.username ? (
                                     election.idNguoiDuyet.username
                                 ) : (
-                                    <span className="text-red-500 font-bold">Chưa ai duyệt</span>
+                                    <span className="text-gray-400">Chưa ai duyệt</span>
                                 )}
                             </div>
 
@@ -174,7 +174,20 @@ function ElectionPage() {
                             ) : user?._id?.toString() === election?.idNguoiTao?._id?.toString() && 
                             (election.trangThai === "Chờ xét duyệt" || election.trangThai === "Từ chối") ? (
                                 <>
-                                    <span className="text-green-600 font-medium">{election.trangThai}</span>
+                                    <span 
+                                        className={`font-medium ${
+                                            {
+                                                "Chờ xét duyệt": "text-yellow-500",
+                                                "Từ chối": "text-red-500",
+                                                "Chưa diễn ra": "text-blue-500",
+                                                "Đang diễn ra": "text-green-600",
+                                                "Đã kết thúc": "text-gray-500"
+                                            }[election.trangThai] || "text-black"
+                                        }`}
+                                    >
+                                        {election.trangThai}
+                                    </span>
+
                                     <button 
                                         className="ml-3 text-red-500 text-sm font-medium rounded-md cursor-pointer mt-2 
                                             transition-all duration-300 ease-in-out 
@@ -186,7 +199,20 @@ function ElectionPage() {
                                     </button>
                                 </>
                             ) : (
-                                <span className="text-green-600 font-medium">{election.trangThai}</span>
+                                <span 
+                                    className={`font-medium ${
+                                        {
+                                            "Chờ xét duyệt": "text-yellow-500",
+                                            "Từ chối": "text-red-500",
+                                            "Chưa diễn ra": "text-blue-500",
+                                            "Đang diễn ra": "text-green-600",
+                                            "Đã kết thúc": "text-gray-500"
+                                        }[election.trangThai] || "text-black"
+                                    }`}
+                                >
+                                    {election.trangThai}
+                                </span>
+
                             )}
                             </div>
                         </div>

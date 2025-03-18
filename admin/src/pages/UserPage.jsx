@@ -5,7 +5,7 @@ import MainLayout from '../layouts/MainLayout'
 import { useState, useEffect } from 'react';
 import { MdClose } from "react-icons/md";
 import axios from "axios";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext2';
 
 function UserPage() {
     const { user } = useAuth();
@@ -108,24 +108,22 @@ function UserPage() {
                     )}
                 </div>
                 <div className='border-2 border-blue-950'>
-                    <div className='w-full bg-blue-950 text-white grid grid-cols-20 items-center font-semibold'>
+                    <div className='w-full bg-blue-950 text-white grid grid-cols-18 items-center font-semibold'>
                         <div className='col-span-1 text-center border-r py-4 uppercase'>#</div>
                         <div className='col-span-3 text-center border-r py-4 uppercase'>Id</div>
                         <div className='col-span-3 border-r py-4 text-center uppercase'>Username</div>
                         <div className='col-span-4 border-r py-4 text-center uppercase'>Email</div>
-                        <div className='col-span-2 border-r py-4 text-center uppercase'>Mô tả</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Vai trò</div>
                         <div className='col-span-1 border-r py-4 text-center uppercase'>Mở</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Trạng thái</div>
                         <div className='col-span-2 py-4 text-center uppercase'>Hành động</div>
                     </div>
                     {userList.map((u, index) => (
-                        <div key={u._id} className='w-full shadow-md grid grid-cols-20 items-center border-b odd:bg-gray-100 even:bg-white'>
+                        <div key={u._id} className='w-full shadow-md grid grid-cols-18 items-center border-b odd:bg-gray-100 even:bg-white'>
                             <div className='col-span-1 text-center border-r py-4'>{index+1}</div>
                             <div className='col-span-3 text-center border-r py-4'>{u._id}</div>
                             <div className='col-span-3 border-r py-4 text-center'>{u.username}</div>
                             <div className='col-span-4 border-r py-4 text-center'>{u.email}</div>
-                            <div className='col-span-2 border-r py-4 text-center'>{u.moTaND}</div>
                             <div className='col-span-2 border-r py-4 text-center'>{u.roleND}</div>
                             <div className='col-span-1 border-r py-4 text-center'>
                                 {u.lanDau ? "Chưa" : "Rồi"}

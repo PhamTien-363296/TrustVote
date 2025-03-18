@@ -7,6 +7,8 @@ export const dangKy = async (req, res) => {
         const { username, email, matKhau, moTaND, roleND } = req.body;
         const idNguoiTao = req.nguoidung._id;
 
+        console.log(req.body)
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.status(400).json({ error: "Định dạng email không hợp lệ" });
@@ -134,7 +136,7 @@ export const capNhatTrangThaiND = async (req, res) => {
             return res.status(404).json({ message: "Không tìm thấy người dùng!" });
         }
 
-        if (nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
+        if (nguoiDuyet.roleND !== "ADMIN") {
             return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
         }
 
