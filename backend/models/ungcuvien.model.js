@@ -75,6 +75,8 @@ const ungcuvienSchema = new mongoose.Schema(
         laDaiBieuHDND: {
             type: String,
         },
+        idDonViBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DonViBauCu" },
+        idDotBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DotBauCu" },
         txHash: {
             type: String,
         },

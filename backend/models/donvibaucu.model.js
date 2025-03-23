@@ -7,7 +7,6 @@ const donViBauCuSchema = new mongoose.Schema(
             ref: "DotBauCu",
             required: true,
         },
-
         maDonViBauCu: {
             type: String,
             required: true,
@@ -16,7 +15,6 @@ const donViBauCuSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-
         capTinh: {
             id: { type: String },
             ten: { type: String },
@@ -28,7 +26,6 @@ const donViBauCuSchema = new mongoose.Schema(
                 _id: false
             },
         ],
-
         soDaiBieuDuocBau: {
             type: Number,
             required: true,

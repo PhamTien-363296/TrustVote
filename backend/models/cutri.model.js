@@ -41,9 +41,10 @@ const cutriSchema = new mongoose.Schema(
         thamGiaBauCu: [
             {
                 maDotBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DotBauCu" },
+                maDonViBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DonViBauCu" },
                 ngayBau: { type: Date, default: Date.now }
             }
-        ],
+        ],        
         idNguoiTao: { 
             type: mongoose.Schema.Types.ObjectId, 
             ref: "Nguoidung", 
