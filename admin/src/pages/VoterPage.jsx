@@ -7,7 +7,6 @@ import { useAuth } from "../context/AuthContext2";
 
 function VoterPage() {
     const { user } = useAuth();
-    
     //const navigate = useNavigate();
     const [cuTriList, setCuTriList] = useState([]);
 
@@ -220,7 +219,7 @@ function VoterPage() {
                     </div>
                 </div>
                 {cuTriList.map((v, index) => (
-                    <div className='w-full shadow-md grid grid-cols-23 items-center border-b odd:bg-gray-100 even:bg-white'>
+                    <div key={index} className='w-full shadow-md grid grid-cols-23 items-center border-b odd:bg-gray-100 even:bg-white'>
                         <div className='col-span-1 text-center border-r py-4'>{index + 1}</div>
                         <div className='col-span-4 border-r py-4 text-center'>{v.hoVaTen}</div>
                         <div className='col-span-3 border-r py-4 text-center'>{v.cccd}</div>

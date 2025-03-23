@@ -38,12 +38,11 @@ app.get("/", (req, res) => {
     res.send("Xin chào bạn");
 });
 
-app.use("/api/auth",authRoutes )
-app.use("/api/cutri",cutriRoutes )
-app.use("/api/dotbaucu",dotbaucuRoutes )
+app.use("/api/auth", authRoutes )
+app.use("/api/cutri", cutriRoutes )
+app.use("/api/dotbaucu", dotbaucuRoutes )
 app.use("/api/donvi", donviRoutes )
 app.use("/api/ungcuvien", ungcuvienRoutes )
-
 
 app.listen(5000, () => {
     console.log(`Server is running on port ${PORT}`);

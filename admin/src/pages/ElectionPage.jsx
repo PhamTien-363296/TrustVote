@@ -23,6 +23,7 @@ function ElectionPage() {
     }); 
     
     const [dotBauCuList, setDotBauCuList] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -39,7 +40,6 @@ function ElectionPage() {
                 setLoading(false);
             }
         };
-
         fetchDotBauCu();
     }, []);
 

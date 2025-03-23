@@ -13,21 +13,19 @@ function Sidebar() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const handleLogout = async () => {
+        try {
+            await axios.post("/api/auth/logout", {}, { withCredentials: true });
 
-const handleLogout = async () => {
-    try {
-        await axios.post("/api/auth/logout", {}, { withCredentials: true });
+            setAuthUser(null); 
+            localStorage.removeItem("authUser"); 
+            navigate("/login"); 
 
-        setAuthUser(null); 
-        localStorage.removeItem("authUser"); 
-        navigate("/login"); 
-
-    } catch (error) {
-        console.error("Lỗi đăng xuất:", error);
-        alert("Đăng xuất thất bại! Thử lại sau.");
-    }
-};
-
+        } catch (error) {
+            console.error("Lỗi đăng xuất:", error);
+            alert("Đăng xuất thất bại! Thử lại sau.");
+        }
+    };
 
     const menuItems = [
         { to: "/", label: "Trang chủ", icon: <BiHome /> },
@@ -43,7 +41,7 @@ const handleLogout = async () => {
     }
 
     return (
-        <div className='sidebar bg-blue-950 text-white min-h-screen max-h-full min-w-fit'>
+        <div className='sidebar bg-blue-950 text-white min-h-screen max-h-full w-47 min-w-fit'>
             <div className='logo h-40'>
                 {authUser ? (
                     <>
@@ -59,7 +57,7 @@ const handleLogout = async () => {
                 {menuItems.map((item) => (
                     <li
                         key={item.to}
-                        className={`flex items-center w-47 gap-2 text-medium !px-7 !py-4 my-3 cursor-pointer 
+                        className={`flex items-center w-full gap-2 text-medium !px-7 !py-4 my-3 cursor-pointer 
                         ${location.pathname === item.to ? "text-blue-900 font-bold bg-slate-100" : "hover:bg-slate-100 hover:text-blue-900 hover:font-bold"}`}
                         onClick={() => navigate(item.to)}
                     >

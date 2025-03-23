@@ -115,6 +115,17 @@ export const layDanhSachDonViBauCuCDR = async (req, res) => {
     }
 };
 
+export const layDanhSachDonViBauCuDDR = async (req, res) => {
+    try {
+        const danhSachDonVi = await DonViBauCu.find({ trangThai: "Đang diễn ra" })
+            .sort({ tenDonVi: 1 });
+
+        return res.status(200).json(danhSachDonVi);
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách đơn vị bầu cử:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ!" });
+    }
+};
 
 export const xoaDonViBauCu = async (req, res) => {
     try {
