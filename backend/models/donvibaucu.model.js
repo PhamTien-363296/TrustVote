@@ -7,6 +7,11 @@ const donViBauCuSchema = new mongoose.Schema(
             ref: "DotBauCu",
             required: true,
         },
+        // idDotBauCu: [{
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref: "DotBauCu",
+        //     required: true,
+        // }],
         maDonViBauCu: {
             type: String,
             required: true,

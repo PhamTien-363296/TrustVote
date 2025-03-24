@@ -1,23 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+import moment from "moment";
 
 function HomePage() {
   const navigate = useNavigate();
+  const [matKhau, setMatKhau] = useState("");
+  const [hienNhapKey, setHienNhapKey] = useState(false); // Ẩn/Hiện ô nhập
+
+
   const [xemDanhSach, setXemDanhSach] = useState(false);
   const [hienBauCu, setHienBauCu] = useState(false);
-  const [xemThongTin, setXemThongTin] = useState(false);
+  const [xemThongTin, setXemThongTin] = useState(null);
 
-  const danhSachUngCuVien = [
-    { id: 1, ten: "Nguyễn Văn A", hinhAnh: "https://via.placeholder.com/100", gender: "Nam" },
-    { id: 2, ten: "Trần Thị B", hinhAnh: "https://via.placeholder.com/100", gender: "Nữ" },
-    { id: 3, ten: "Phạm Văn C", hinhAnh: "https://via.placeholder.com/100", gender: "Nam" },
-    { id: 4, ten: "Lê Thị D", hinhAnh: "https://via.placeholder.com/100", gender: "Nữ" },
-    { id: 5, ten: "Đỗ Văn E", hinhAnh: "https://via.placeholder.com/100", gender: "Nam" }
-  ];
+  const[donViBauCu, setDonViBauCu] = useState(null);
+  const[danhSachUngCuVien, setDanhSachUngCuVien] = useState([]);
+  const[dotBauCu, setDotBauCu] = useState(null);
 
   const [chonUngCu, setChonUngCu] = useState([]);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("/api/ungcuvien/lay-theocutri");
+        if (response.data.success && response.data.data) {
+          setDotBauCu(response.data.data.dotBauCu || {});
+          setDonViBauCu(response.data.data.donViBauCu || {});
+          setDanhSachUngCuVien(response.data.data.ungCuViens || []);
+        } else {
+          setError("Không có dữ liệu");
+        }
+      } catch (err) {
+        console.error("Lỗi khi gọi API:", err);
+        setError("Lỗi khi kết nối đến server");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, []);
+  
   const handleSelectCandidate = (candidateId) => {
     setChonUngCu((prev) => {
       if (prev.includes(candidateId)) {
@@ -31,16 +58,33 @@ function HomePage() {
     });
   };
 
-  const handleSubmit = () => {
-    if (chonUngCu.length === 3) {
-      console.log('Gửi phiếu bầu với các đại biểu:', chonUngCu);
-      alert('Gửi phiếu bầu thành công!');
-      setHienBauCu(false);
-      setChonUngCu([]);
-    } else {
-      alert('Vui lòng chọn đủ 3 đại biểu!');
+  const handleSubmit = async () => {
+    if (!matKhau.trim()) {
+        alert("Vui lòng nhập Private Key để tiếp tục!");
+        return;
+    }
+
+    try {
+        await axios.post("/api/cutri/themphieubau", {
+            matKhau: matKhau,
+            ungCuVien: chonUngCu,
+            idDotBauCu: dotBauCu._id,
+            idDonViBauCu: donViBauCu._id
+        });
+        alert("Gửi phiếu bầu thành công!");
+        setChonUngCu([]);
+        setHienBauCu(false);
+        setMatKhau("");
+    } catch (err) {
+        console.error("Lỗi khi gửi phiếu bầu:", err);
+        alert("Lỗi khi gửi phiếu bầu!");
     }
   };
+
+  if (loading) return <div>Đang tải...</div>;
+  if (error) return <div>{error}</div>;
+
+  // if (!dotBauCu || !donViBauCu || !danhSachUngCuVien) return <div>Không có đợt bầu cử nào</div>;
 
   return (
     <div className="bg-gray-100 w-full min-h-screen flex flex-col">
@@ -54,11 +98,15 @@ function HomePage() {
       <div className="container mx-auto mt-6 px-6">
         <div className="text-center mb-6">
           <h1 className="font-black text-3xl text-blue-900">
-            Bầu cử đại biểu Quốc hội khóa XII và đại biểu HĐND
+            {dotBauCu?.tenDotBauCu}
           </h1>
+          <h2 className="font-semibold text-xl text-blue-900">
+          <h2 className="font-semibold text-xl text-blue-900">
+            {moment(dotBauCu?.ngayBatDau).format("DD/MM/YYYY hh:mm:ss")} - {moment(dotBauCu?.ngayKetThuc).format("DD/MM/YYYY hh:mm:ss")}
+          </h2>
+          </h2>
           <h3 className="font-semibold text-lg text-gray-700 mt-2">
-            DANH SÁCH CHÍNH THỨC NHỮNG NGƯỜI ỨNG CỬ ĐẠI BIỂU KHOÁ XV THEO TỪNG
-            ĐƠN VỊ BẦU CỬ TRONG CẢ NƯỚC
+            DANH SÁCH CHÍNH THỨC NHỮNG NGƯỜI ỨNG CỬ THEO TỪNG ĐƠN VỊ BẦU CỬ TRONG CẢ NƯỚC
           </h3>
         </div>
         <div className="w-full flex justify-end mb-6">
@@ -73,8 +121,8 @@ function HomePage() {
         <div className="bg-white shadow-lg rounded-lg p-6">
           <div>
             <h5 className="font-bold text-lg text-blue-800">
-              THÀNH PHỐ HÀ NỘI:{" "}
-              <span className="text-gray-700 font-normal">
+              {donViBauCu?.capTinh?.ten} 
+              <span className="text-gray-700 font-normal ml-3">
                 SỐ ĐƠN VỊ BẦU CỬ LÀ 10
               </span>
             </h5>
@@ -84,23 +132,23 @@ function HomePage() {
               <strong>Số người ứng cử:</strong> 49 người.
             </p>
             <p className="text-gray-600">
-              <strong>UBBC Tỉnh/Thành phố:</strong> Thành phố Hà Nội
+              <strong>UBBC Tỉnh/Thành phố:</strong> {donViBauCu?.capTinh?.ten} 
             </p>
           </div>
           <div className="mt-4 p-4 bg-gray-50 rounded-md">
             <div className="flex items-start justify-between">
               <div>
                 <h5 className="font-bold text-blue-700">
-                  Đơn vị bầu cử Số 1:{" "}
+                  {donViBauCu?.tenDonVi}{": "}
                   <span className="text-gray-700">
-                    Gồm các quận: Ba Đình, Đống Đa và Hai Bà Trưng.
+                    Gồm các quận: {donViBauCu?.capHuyen?.map((item) => item.ten).join(", ")}.
                   </span>
                 </h5>
                 <p className="text-gray-600">
-                  <strong>Số đại biểu Quốc hội được bầu:</strong> 3 người.
+                  <strong>Số đại biểu Quốc hội được bầu:</strong> {donViBauCu?.soDaiBieuDuocBau}.
                 </p>
                 <p className="text-gray-600">
-                  <strong>Số người ứng cử:</strong> 5 người.
+                  <strong>Số người ứng cử:</strong> {donViBauCu?.danhSachUngCu?.length}.
                 </p>
                 <a className="text-blue-700 font-semibold mt-2 block cursor-pointer hover:underline" onClick={() => setXemDanhSach(!xemDanhSach)}>
                   {xemDanhSach ? "Ẩn danh sách ứng cử viên" : "Xem danh sách ứng cử viên"}
@@ -121,17 +169,17 @@ function HomePage() {
                 </h5>
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                   {danhSachUngCuVien.map((ungVien, index) => (
-                    <div key={ungVien.id} className="bg-white p-5 rounded-lg shadow-md flex flex-col items-center relative" onClick={() => setXemThongTin(!xemThongTin)}> 
+                    <div key={ungVien.id} className="bg-white p-5 rounded-lg shadow-md flex flex-col items-center relative" onClick={() => setXemThongTin(xemThongTin ? null : ungVien)}> 
                       <div className="absolute -top-2 -left-2 bg-blue-700 text-white w-7 h-7 flex items-center justify-center rounded-full text-sm font-bold shadow-md">
                         {index + 1}
                       </div>
                       <img
                         src={ungVien.hinhAnh}
-                        alt={ungVien.ten}
+                        alt={ungVien.hoVaTen}
                         className="w-full h-70 rounded-lg object-cover border-2 border-white shadow-sm"
                       />
                       <p className="text-gray-800 font-semibold text-lg mt-4 text-center">
-                        {ungVien.ten}
+                        {ungVien.hoVaTen}
                       </p>
                     </div>
                   ))}
@@ -144,31 +192,80 @@ function HomePage() {
 
       {xemThongTin && (
         <div className="fixed top-0 left-0 w-full h-full bg-gray-900/50 flex items-center justify-center">
-          <div className="bg-blue-200 p-8 rounded-lg shadow-lg w-120 border border-gray-400 relative">
+          <div className="bg-blue-200 p-8 rounded-lg shadow-lg w-200 border border-gray-400 relative">
             <button
               className="absolute cursor-pointer top-0 right-3 text-gray-700 hover:text-red-600 transition text-xl mt-2 mb-2"
-              onClick={() => setXemThongTin(false)}
+              onClick={() => setXemThongTin(null)}
             >
               X
             </button>
             <div className="text-center">
               <img
-                src="https://via.placeholder.com/100"
-                alt="Nguyễn Văn A"
+                src={xemThongTin.hinhAnh}
+                alt={xemThongTin.hoVaTen}
                 className="w-40 h-50 rounded-lg object-cover border-2 border-white shadow-md mx-auto"
               />
-              <h3 className="text-lg font-bold mt-4">Nguyễn Văn A</h3>
               <div className="mt-3 text-left">
-                <p className="text-sm text-gray-700">Giới tính: Nam</p>
-                <p className="text-sm text-gray-700">Tuổi: 45</p>
-                <p className="text-sm text-gray-700">Nghề nghiệp: Giáo viên</p>
-                <p className="text-sm text-gray-700">Địa chỉ: Hà Nội</p>
-                <p className="text-sm text-gray-700">Số phiếu bầu: 100</p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Họ và tên:</span> {xemThongTin.hoVaTen}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Ngày tháng năm sinh:</span> {moment(xemThongTin?.ngaySinh).format("DD/MM/YYYY")}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Giới tính:</span> {xemThongTin.gioiTinh}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Quốc tịch:</span> {xemThongTin.quocTich}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Dân tộc:</span> {xemThongTin.danToc}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Tôn giáo:</span> {xemThongTin.tonGiao}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Quê quán:</span> {xemThongTin.queQuan.capXa.ten}, {xemThongTin.queQuan.capHuyen.ten}, {xemThongTin.queQuan.capTinh.ten}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Nơi ở hiện nay:</span> {xemThongTin.noiO}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Giáo dục phổ thông:</span> {xemThongTin.trinhDoHocVan.phoThong}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Chuyên môn, nghiệp vụ:</span> {xemThongTin.trinhDoHocVan.chuyenMon}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Học hàm, học vị:</span> {xemThongTin.trinhDoHocVan.hocVi}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Lý luận chính trị:</span> {xemThongTin.trinhDoHocVan.lyLuan}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Ngoại ngữ:</span> {xemThongTin.trinhDoHocVan.ngoaiNgu}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Nghề nghiệp, chức vụ:</span> {xemThongTin.ngheNghiep}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Nơi công tác:</span> {xemThongTin.noiCongTac}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Ngày vào Đảng:</span> {xemThongTin.ngayVaoDang}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Là đại biểu QH:</span> {xemThongTin.laDaiBieuQH}
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-bold">Là đại biểu HĐND:</span> {xemThongTin.laDaiBieuHDND}
+                </p>
               </div>
             </div>
           </div>
         </div>
       )}
+
 
       {hienBauCu && (
         <div className="fixed top-0 left-0 w-full h-full bg-gray-900/50 flex items-center justify-center">
@@ -191,28 +288,28 @@ function HomePage() {
               </span>
             </div>
 
-            <h3 className="text-center font-bold text-xl mt-15">PHIẾU BẦU CỬ</h3>
+            <h3 className="text-center font-bold text-xl mt-10">PHIẾU BẦU CỬ</h3>
             <p className="text-center text-xl font-bold">ĐẠI BIỂU QUỐC HỘI KHÓA XV</p>
             <hr className="mx-40 my-2" />
-            <p className="text-center mt-5 text-lg font-bold">Được bầu 3 đại biểu</p>
+            <p className="text-center mt-5 text-lg font-bold">Được bầu {donViBauCu.soDaiBieuDuocBau} đại biểu</p>
 
             <div className="mt-10 mx-20">
               {danhSachUngCuVien.map((candidate, index) => (
                 <div key={index} className="text-gray-900 font-semibold text-lg">
                   <label
-                    className={`cursor-pointer ${chonUngCu.includes(candidate.id) ? 'text-red-500' : ''}`} 
-                    onClick={() => handleSelectCandidate(candidate.id)}
+                    className={`cursor-pointer ${chonUngCu.includes(candidate._id) ? 'text-blue-600 font-bold' : ''}`} 
+                    onClick={() => handleSelectCandidate(candidate._id)}
                   >
                     <input
                       type="checkbox"
-                      value={candidate.id}
-                      onChange={() => handleSelectCandidate(candidate.id)}
-                      checked={chonUngCu.includes(candidate.id)}
-                      disabled={chonUngCu.length >= 3 && !chonUngCu.includes(candidate.id)}
+                      value={candidate._id}
+                      onChange={() => handleSelectCandidate(candidate._id)}
+                      checked={chonUngCu.includes(candidate._id)}
+                      disabled={chonUngCu.length >= donViBauCu.soDaiBieuDuocBau && !chonUngCu.includes(candidate._id)}
                       className="hidden"
                     />
-                    {candidate.gender === 'Nam' ? 'Ông' : 'Bà'}
-                    <span className="ml-7 uppercase">{candidate.ten}</span>
+                    {candidate.gioiTinh === 'Nam' ? 'Ông' : 'Bà'}
+                    <span className="ml-7 uppercase">{candidate.hoVaTen}</span>
                   </label>
                 </div>
               ))}
@@ -222,8 +319,8 @@ function HomePage() {
 
             <div className="text-center mt-10">
               <button
-                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-                onClick={handleSubmit}
+                className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                onClick={() => setHienNhapKey(true)}
               >
                 Gửi phiếu bầu
               </button>
@@ -231,6 +328,40 @@ function HomePage() {
           </div>
         </div>
       )}
+      {hienNhapKey && (
+        <div className="fixed top-0 left-0 w-full h-full bg-gray-900/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-96 relative">
+            <button
+              className="absolute top-3 right-3 text-gray-500 hover:text-red-600 transition text-2xl cursor-pointer"
+              onClick={() => {
+                setHienNhapKey(false);
+                setMatKhau("");
+              }}
+            >
+              &times;
+            </button>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+              Xác nhận bầu cử
+            </h2>
+            <input
+              type="password"
+              placeholder="Nhập Private Key"
+              value={matKhau}
+              onChange={(e) => setMatKhau(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+            <button
+              onClick={handleSubmit}
+              className="w-full mt-4 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            >
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import express from "express"
-import { protectRoute } from "../middleware/protectRoute.js"
-import { capNhatTrangThaiUCV, duyetUngCuVien, layDanhSachUngCuVien, layUngCuVienTheoId, themUngCuVien, xoaUngCuVien } from "../controllers/ungcuvien.controller.js"
+import { protectRoute, protectRoute2 } from "../middleware/protectRoute.js"
+import { capNhatTrangThaiUCV, duyetUngCuVien, getUngCuVienByCuTri, layDanhSachUngCuVien, layUngCuVienTheoId, themUngCuVien, xoaUngCuVien } from "../controllers/ungcuvien.controller.js"
 const router = express.Router()
 
 router.post("/them", protectRoute, themUngCuVien)
@@ -10,5 +10,8 @@ router.get("/lay", layDanhSachUngCuVien);
 router.delete("/xoa/:id",protectRoute,xoaUngCuVien)
 router.get("/lay/:id", layUngCuVienTheoId)
 router.put("/capnhat/:id",protectRoute,capNhatTrangThaiUCV)
+
+
+router.get("/lay-theocutri",protectRoute2,getUngCuVienByCuTri)
 
 export default router

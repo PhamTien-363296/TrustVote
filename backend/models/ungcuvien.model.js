@@ -8,6 +8,7 @@ const ungcuvienSchema = new mongoose.Schema(
         //     unique: true, 
         // },
         idDonViBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DonViBauCu"},
+        idDotBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DotBauCu" },
         hinhAnh: { type: String },
         hoVaTen: {
             type: String,
@@ -75,8 +76,6 @@ const ungcuvienSchema = new mongoose.Schema(
         laDaiBieuHDND: {
             type: String,
         },
-        idDonViBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DonViBauCu" },
-        idDotBauCu: { type: mongoose.Schema.Types.ObjectId, ref: "DotBauCu" },
         txHash: {
             type: String,
         },

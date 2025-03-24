@@ -4,6 +4,9 @@ import Web3 from "web3";
 import contractABI from "../config/ABI.js";
 import contractAddr from '../config/ContractAddress.js';
 import {v2 as cloudinary} from 'cloudinary'
+import CuTri from "../models/cutri.model.js";
+import DonViBauCu from "../models/donvibaucu.model.js";
+import DotBauCu from "../models/dotbaucu.model.js";
 
 export const themUngCuVien = async (req, res) => {
     try {
@@ -261,5 +264,91 @@ export const capNhatTrangThaiUCV = async (req, res) => {
     } catch (error) {
         console.error("Lỗi capNhatTrangThaiUCV controller:", error.message);
         res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};
+
+export const getUngCuVienByCuTri = async (req, res) => {
+    try {
+        const idCuTri = req.cutri._id;
+        console.log("id cu tri", idCuTri);
+
+        const result = await CuTri.aggregate([
+            {
+                $match: { _id: idCuTri } // Tìm cử tri theo ID
+            },
+            {
+                $lookup: {
+                    from: "DonViBauCu", // Liên kết với đơn vị bầu cử
+                    let: { capTinhId: "$diaChi.capTinh.id", capHuyenId: "$diaChi.capHuyen.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$capTinh.id", "$$capTinhId"] },
+                                        { $in: ["$$capHuyenId", "$capHuyen.id"] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: "donViBauCu"
+                }
+            },
+            { $unwind: "$donViBauCu" }, // Chuyển đơn vị bầu cử thành object thay vì array
+            {
+                $lookup: {
+                    from: "DotBauCu", // Liên kết với đợt bầu cử
+                    localField: "donViBauCu.idDotBauCu",
+                    foreignField: "_id",
+                    as: "dotBauCu"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$dotBauCu",
+                    preserveNullAndEmptyArrays: false // Chỉ lấy các đợt bầu cử có tồn tại
+                }
+            },
+            {
+                $match: { "dotBauCu.trangThai": "Đang diễn ra" } // Lọc ra đợt bầu cử đang diễn ra
+            },
+            {
+                $lookup: {
+                    from: "UngCuVien", // Lấy danh sách ứng cử viên
+                    let: { donViId: "$donViBauCu._id", dotId: "$dotBauCu._id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$idDonViBauCu", "$$donViId"] },
+                                        { $eq: ["$idDotBauCu", "$$dotId"] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: "ungCuViens"
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    donViBauCu: 1, // Lấy toàn bộ thông tin đơn vị bầu cử
+                    dotBauCu: 1, // Lấy toàn bộ thông tin đợt bầu cử
+                    ungCuViens: 1 // Lấy toàn bộ thông tin ứng cử viên
+                }
+            }
+        ]);
+
+        if (!result.length) {
+            return res.json({ success: false, message: "Không tìm thấy ứng cử viên nào" });
+        }
+
+        return res.json({ success: true, data: result[0] });
+    } catch (error) {
+        console.error(error);
+        return res.json({ success: false, message: "Lỗi khi lấy danh sách ứng cử viên" });
     }
 };

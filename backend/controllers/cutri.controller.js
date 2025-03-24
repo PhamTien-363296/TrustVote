@@ -175,7 +175,7 @@ export const danhNhap = async (req, res) => {
         const kiemTra_matKhau = await bcrypt.compare(matKhau, cutri.matKhau);
         if (!kiemTra_matKhau) {
             return res.status(400).json({ error: "CCCD hoặc mật khẩu không đúng" });
-        }
+        }        
 
         generateTokenAndSetCookie(cutri._id, res);
         return res.status(200).json({ message: "Đăng nhập thành công", user: { id: cutri._id, cccd: cutri.cccd } });
@@ -273,5 +273,72 @@ export const capNhatTrangThaiCuTri = async (req, res) => {
     } catch (error) {
         console.error("Lỗi capNhatTrangThaiCuTri controller:", error.message);
         res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};
+
+import { ethers } from "ethers";
+import abi from "../abi.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
+const contractAddress = process.env.CONTRACT_ADDRESS;
+const contractABI = abi; 
+
+export const themPhieuBau = async (req, res) => {
+    try {
+        const idCuTri = req.cutri._id;
+        const { matKhau, ungCuVien, idDotBauCu, idDonViBauCu } = req.body;
+
+        const cuTri = await CuTri.findById(idCuTri);
+        if (!cuTri) {
+            return res.status(404).json({ message: "Không tìm thấy cử tri!" });
+        }
+
+        const kiemTra_matKhau = await bcrypt.compare(matKhau, cuTri.matKhau);
+        if (!kiemTra_matKhau) {
+            return res.status(400).json({ error: "Mật khẩu không đúng" });
+        }
+
+        if (!Array.isArray(ungCuVien) || ungCuVien.length === 0) {
+            return res.status(400).json({ message: "Danh sách ứng cử viên không hợp lệ!" });
+        }
+
+        const privateKey = process.env.VOTER_PRIVATE_KEY;
+        if (!privateKey) {
+            return res.status(500).json({ message: "Lỗi hệ thống: Không tìm thấy Private Key trong .env" });
+        }
+        console.log("Provider:", provider);
+        console.log("privateKey:", privateKey);
+
+        let signer;
+        try {
+            signer = new ethers.Wallet(privateKey, provider);
+        } catch (error) {
+            return res.status(400).json({ message: "Private Key không hợp lệ!" });
+        }
+
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        try {
+            console.log("Đang gửi giao dịch duyệt sản phẩm lên Blockchain...");
+
+            const tx = await contract.vote(idCuTri.toString(), idDotBauCu.toString(), ungCuVien);
+            console.log("Giao dịch đã gửi:", tx.hash);
+            await tx.wait();
+            console.log("Duyệt sản phẩm thành công trên blockchain!");
+
+            cuTri.thamGiaBauCu.push({ maDotBauCu: idDotBauCu, maDonViBauCu: idDonViBauCu });
+            await cuTri.save();
+
+            return res.json({ message: "Phiếu bầu đã được thêm!", txHash: tx.hash });
+        } catch (err) {
+            console.error("Lỗi khi gửi giao dịch:", err);
+            return res.status(500).json({ message: "Lỗi thêm vote", error: err.message });
+        }
+    } catch (error) {
+        console.error("Lỗi hệ thống:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
     }
 };
