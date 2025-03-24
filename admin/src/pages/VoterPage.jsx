@@ -15,6 +15,7 @@ function VoterPage() {
     const [cuTri, setCuTri] = useState({
         hoVaTen: "",
         cccd: "",
+        maDotBauCu:"",
         diaChiChiTiet: "",
         diaChi: {
             capTinh: { id: "", name: "" },
@@ -140,6 +141,7 @@ function VoterPage() {
                 setCuTri({
                     hoVaTen: "",
                     cccd: "",
+                    maDotBauCu:"",
                     diaChiChiTiet: "",
                     diaChi: {
                         capTinh: { id: "", name: "" },
@@ -309,6 +311,7 @@ function VoterPage() {
                                 setCuTri({
                                     hoVaTen: "",
                                     cccd: "",
+                                    maDotBauCu:"",
                                     diaChiChiTiet: "",
                                     diaChi: {
                                         capTinh: { id: "", name: "" },
@@ -320,7 +323,7 @@ function VoterPage() {
                         >
                             <MdClose />
                         </button>
-                        <h1 className="text-2xl font-bold text-blue-900 text-center mb-5">TẠO ĐƠN VỊ BẦU CỬ MỚI</h1>
+                        <h1 className="text-2xl font-bold text-blue-900 text-center mb-5">TẠO CỬ TRI MỚI</h1>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="block font-medium mb-2">Họ và tên:</label>

@@ -15,13 +15,7 @@ const ungcuvienSchema = new mongoose.Schema(
             required: true,
         },
         ngaySinh: {
-            type: Date,
-            validate: {
-                validator: function (value) {
-                    return value <= new Date(); // Không được lớn hơn ngày hiện tại
-                },
-                message: "Ngày sinh không hợp lệ!",
-            },
+            type: Number
         },
         gioiTinh: {
             type: String,

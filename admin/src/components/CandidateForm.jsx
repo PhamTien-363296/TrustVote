@@ -98,9 +98,9 @@ const CandidateForm = ({
                     </div>
                     <div className="grid grid-cols-5 gap-4">
                         <div>
-                            <label className="block font-medium mb-1">Ngày sinh:</label>
+                            <label className="block font-medium mb-1">Tuổi:</label>
                             <input
-                                type="date"
+                                type="number"
                                 name="ngaySinh"
                                 value={ungCuVienMoi.ngaySinh}
                                 onChange={handleChange}

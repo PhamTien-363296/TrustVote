@@ -166,8 +166,19 @@ function ElectionUnitsPage() {
     const handleUpdate = async (id, trangThaiMoi) => {
         const isConfirmed = window.confirm("Bạn có chắc chắn muốn cập nhật đơn vị này?");
         if (!isConfirmed) return;
+    
+        const privateKey = prompt("Nhập private key để ký giao dịch:");
+        if (!privateKey) {
+            alert("Bạn cần nhập private key!");
+            return;
+        }
+    
         try {
-            const response = await axios.put(`/api/donvi/capnhat/${id}`, { trangThaiMoi });
+            const response = await axios.put(`/api/donvi/capnhat/${id}`, { 
+                trangThaiMoi, 
+                privateKey 
+            });
+    
             alert(response.data.message);
             window.location.reload();
         } catch (error) {
@@ -175,6 +186,7 @@ function ElectionUnitsPage() {
             alert(error.response?.data?.message || "Lỗi khi cập nhật đơn vị!");
         }
     };
+    
     
     if (loading) return <MainLayout><p>Đang tải...</p></MainLayout>;
 
@@ -234,11 +246,11 @@ function ElectionUnitsPage() {
                 <div className="border-2 border-blue-950">
                     <div className="w-full bg-blue-950 text-white grid grid-cols-21 items-center font-semibold">
                         <div className="col-span-1 text-center border-r py-4 uppercase">#</div>
-                        <div className="col-span-2 text-center border-r py-4 uppercase">Mã đơn vị</div>
+                        <div className="col-span-3 text-center border-r py-4 uppercase">Mã đơn vị</div>
                         <div className="col-span-2 border-r py-4 text-center uppercase">Tên đơn vị</div>
                         <div className="col-span-2 border-r py-4 text-center uppercase">Tỉnh thành</div>
                         <div className="col-span-6 border-r py-4 text-center uppercase">Quận huyện</div>
-                        <div className="col-span-2 border-r py-4 text-center uppercase">Số đại biểu</div>
+                        <div className="col-span-1 border-r py-4 text-center uppercase">Số đại biểu</div>
                         <div className="col-span-2 border-r py-4 text-center uppercase">Người tạo</div>
                         <div className="col-span-2 border-r py-4 text-center uppercase">Người duyệt</div>
                         <div className="col-span-2 py-4 text-center uppercase">Trạng thái</div>
@@ -251,13 +263,13 @@ function ElectionUnitsPage() {
                         danhSachLoc.map((election, index) => (
                             <div key={index} className='w-full shadow-md grid grid-cols-21 items-center border-b odd:bg-gray-100 even:bg-white'>
                                 <div className='col-span-1 text-center border-r py-4'>{index + 1}</div>
-                                <div className='col-span-2 text-center border-r py-4 uppercase'>{election.maDonViBauCu}</div>
+                                <div className='col-span-3 text-center border-r py-4 uppercase'>{election.maDonViBauCu}</div>
                                 <div className='col-span-2 border-r py-4 text-center'>{election.tenDonVi}</div>
                                 <div className='col-span-2 border-r py-4 text-center'>{election?.capTinh?.ten}</div>
                                 <div className='col-span-6 border-r py-4 text-center'>
                                     {election?.capHuyen?.map(huyen => huyen.ten).join(", ")}
                                 </div>
-                                <div className='col-span-2 border-r py-4 text-center'>{election.soDaiBieuDuocBau}</div>
+                                <div className='col-span-1 border-r py-4 text-center'>{election.soDaiBieuDuocBau}</div>
                                 <div className='col-span-2 border-r py-4 text-center'>{election.idNguoiTao.username}</div>
                                 <div className='col-span-2 border-r py-4 text-center'>
                                     {election?.idNguoiDuyet?.username ? (
