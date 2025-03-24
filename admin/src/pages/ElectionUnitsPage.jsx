@@ -32,63 +32,53 @@ function ElectionUnitsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    
     useEffect(() => {
-        const layDotBauCu = async () => {
+        const layDuLieu = async () => {
             try {
-                const response = await axios.get("/api/dotbaucu/lay/daduyet");
-                setDotBauCuList(response.data);
+                setLoading(true);
+                const [dotBauCuRes, tinhThanhRes] = await Promise.all([
+                    axios.get("/api/dotbaucu/lay/daduyet"),
+                    axios.get("https://provinces.open-api.vn/api/?depth=1")
+                ]);
+                setDotBauCuList(dotBauCuRes.data);
+                setCapTinhList(tinhThanhRes.data || []);
 
-                if (response.data.length > 0) {
-                    const dotBauCuMacDinh = response.data[0];
-                    setDotBauCuDaChon(dotBauCuMacDinh);
+                const dotBauCuMacDinh = dotBauCuRes.data.length > 0 ? dotBauCuRes.data[0] : null;
+                setDotBauCuDaChon(dotBauCuMacDinh);
+
+                if (dotBauCuMacDinh) {
+                    const donViRes = await axios.get(`/api/donvi/lay/${dotBauCuMacDinh._id}`);
+                    setDonViBauCuList(donViRes.data);
                 }
             } catch (err) {
-                setError("Lỗi khi tải đợt bầu cử!");
+                setError("Lỗi khi tải dữ liệu!");
                 console.error("Lỗi API:", err);
             } finally {
                 setLoading(false);
             }
         };
-
-        layDotBauCu();
+        layDuLieu();
     }, []);
 
     useEffect(() => {
-        if (!dotBauCuDaChon) return;
-
-        const fetchDonViBauCu = async () => {
+        const layDonViBauCu = async () => {
+            if (!dotBauCuDaChon) return;
+    
             try {
-                const response = await axios.get(`/api/donvi/lay/${dotBauCuDaChon._id}`);
-                setDonViBauCuList(response.data);
+                const donViRes = await axios.get(`/api/donvi/lay/${dotBauCuDaChon._id}`);
+                setDonViBauCuList(donViRes.data);
             } catch (err) {
-                setError("Lỗi khi tải đơn vị bầu cử!");
-                console.error("Lỗi API:", err);
-            } finally {
-                setLoading(false);
+                console.error("Lỗi khi tải danh sách đơn vị bầu cử:", err);
             }
         };
-
-        fetchDonViBauCu();
+    
+        layDonViBauCu();
     }, [dotBauCuDaChon]);
+    
 
     const danhSachLoc = donViBauCuList.filter((donVi) =>
         tinhThanhDaChon ? donVi.capTinh.id === tinhThanhDaChon : true
     );
-    
-    useEffect(() => {
-        const layDanhSachTinhThanh = async () => {
-            try {
-                const response = await axios.get("https://provinces.open-api.vn/api/?depth=1");
-                setCapTinhList(response.data || []);
-                //console.log(response.data)
-            } catch (error) {
-                console.error("Lỗi khi tải danh sách tỉnh/thành:", error);
-                setCapTinhList([]);
-            }
-        };
-        layDanhSachTinhThanh();
-    }, []);
 
     const xuLyThayDoiCapTinh = async (e) => {
         const tinhId = e.target.value;
