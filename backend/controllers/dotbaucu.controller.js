@@ -1,5 +1,10 @@
 import DotBauCu from "../models/dotbaucu.model.js";
 import NguoiDung from "../models/nguoidung.model.js";
+import { ethers } from "ethers";
+import abi from "../abi.js"
+
+import * as dotenv from "dotenv";
+dotenv.config();
 
 import moment from "moment";
 
@@ -68,25 +73,89 @@ export const themDotBauCu = async (req, res) => {
 export const xetDuyetDotBauCu = async (req, res) => {
     try {
         const { id } = req.params;
-        const { chapThuan } = req.body;
+        const { chapThuan, privateKey } = req.body;
+        const idnguoiDuyet = req.nguoidung._id;
 
+        if (!privateKey) {
+            return res.status(400).json({ message: "Cần nhập private key để duyệt bầu cử!" });
+        }
+
+        // Kiểm tra người duyệt có phải ADMIN không
+        const nguoiDuyet = await NguoiDung.findById(idnguoiDuyet);
+        if (!nguoiDuyet) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+        }
+        if (nguoiDuyet.roleND !== "ADMIN") {
+            return res.status(403).json({ message: "Bạn không có quyền duyệt bầu cử!" });
+        }
+
+     
         const dotBauCu = await DotBauCu.findById(id);
         if (!dotBauCu) {
             return res.status(404).json({ message: "Không tìm thấy đợt bầu cử!" });
         }
-
         if (dotBauCu.trangThai !== "Chờ xét duyệt") {
             return res.status(400).json({ message: "Đợt bầu cử này đã được xét duyệt trước đó!" });
         }
 
+        // Kiểm tra private key có khớp với admin không
+        const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
+        const signer = new ethers.Wallet(privateKey, provider);
+        const adminAddress = nguoiDuyet.address; 
+
+        console.log("Signer Address nhập vào:", signer.address);
+        console.log("Admin Address từ DB:", adminAddress);
+
+        if (signer.address.toLowerCase() !== adminAddress.toLowerCase()) {
+            return res.status(403).json({ message: "Private key không khớp với tài khoản admin!" });
+        }
+
+      
         dotBauCu.trangThai = chapThuan ? "Chưa diễn ra" : "Từ chối";
         await dotBauCu.save();
 
-        res.status(200).json({ message: `Đợt bầu cử đã được ${chapThuan ? "duyệt" : "từ chối"} thành công!`, dotBauCu });
+        console.log("Election ID:", dotBauCu._id.toString());
+console.log("Tên bầu cử:", dotBauCu.tenDotBauCu);
+
+
+
+        if (chapThuan) {
+            try {
+            
+                const contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, abi, signer);
+
+                const startTime = Math.floor(new Date(dotBauCu.ngayBatDau).getTime() / 1000);
+                const endTime = Math.floor(new Date(dotBauCu.ngayKetThuc).getTime() / 1000);
+                console.log("Thời gian bắt đầu:", startTime);
+console.log("Thời gian kết thúc:", endTime);
+
+                console.log("Gửi transaction tạo đợt bầu cử...");
+                const tx = await contract.createElection(
+                    dotBauCu._id.toString(),
+                    dotBauCu.tenDotBauCu,
+                    startTime,
+                    endTime
+                );
+
+                console.log("Transaction gửi đi:", tx.hash);
+                await tx.wait();
+                console.log("Transaction thành công!");
+            } catch (err) {
+                console.error("Lỗi khi gửi transaction:", err);
+                return res.status(500).json({ message: "Lỗi khi gửi transaction!", error: err.message });
+            }
+        }
+
+        res.status(200).json({
+            message: `Đợt bầu cử đã được ${chapThuan ? "duyệt" : "từ chối"} thành công!`,
+            dotBauCu
+        });
     } catch (error) {
         res.status(500).json({ message: "Lỗi server!", error: error.message });
     }
 };
+
+
 
 export const layDotBauCuChuaDienRa = async (req, res) => {
     try {
@@ -126,44 +195,44 @@ export const xoaDotBauCu = async (req, res) => {
     }
 };
 
-export const capNhatTrangThaiDot = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { trangThaiMoi } = req.body;
-        const idNguoiDuyet = req.nguoidung._id;
+// export const capNhatTrangThaiDot = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const { trangThaiMoi } = req.body;
+//         const idNguoiDuyet = req.nguoidung._id;
 
-        const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
-        if (!nguoiDuyet) {
-            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
-        }
+//         const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
+//         if (!nguoiDuyet) {
+//             return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+//         }
 
-        if (nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
-            return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
-        }
+//         if (nguoiDuyet.roleND !== "ADMIN") {
+//             return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
+//         }
 
-        const dotBauCu = await DotBauCu.findById(id);
-        if (!dotBauCu) {
-            return res.status(404).json({ message: "Không tìm thấy đợt bầu cử!" });
-        }
+//         const dotBauCu = await DotBauCu.findById(id);
+//         if (!dotBauCu) {
+//             return res.status(404).json({ message: "Không tìm thấy đợt bầu cử!" });
+//         }
 
-        if (dotBauCu.trangThai !== "Chờ xét duyệt") {
-            return res.status(400).json({
-                message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
-            });
-        }
+//         if (dotBauCu.trangThai !== "Chờ xét duyệt") {
+//             return res.status(400).json({
+//                 message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
+//             });
+//         }
 
-        dotBauCu.trangThai = trangThaiMoi;
-        dotBauCu.idNguoiDuyet = idNguoiDuyet;
-        dotBauCu.thoiGianDuyet = new Date();
+//         dotBauCu.trangThai = trangThaiMoi;
+//         dotBauCu.idNguoiDuyet = idNguoiDuyet;
+//         dotBauCu.thoiGianDuyet = new Date();
 
-        await dotBauCu.save();
+//         await dotBauCu.save();
 
-        res.status(200).json({
-            message: "Cập nhật trạng thái thành công!"
-        });
+//         res.status(200).json({
+//             message: "Cập nhật trạng thái thành công!"
+//         });
 
-    } catch (error) {
-        console.error("Lỗi capNhatTrangThaiDot controller:", error.message);
-        res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
-    }
-};
+//     } catch (error) {
+//         console.error("Lỗi capNhatTrangThaiDot controller:", error.message);
+//         res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+//     }
+// };

@@ -106,10 +106,20 @@ function ElectionPage() {
     };
     
     const handleUpdate = async (id, trangThaiMoi) => {
+        const privateKey = prompt("Vui lòng nhập private key để duyệt:");
+        if (!privateKey) {
+            alert("Bạn cần nhập private key để duyệt!");
+            return;
+        }
+    
         const isConfirmed = window.confirm("Bạn có chắc chắn muốn cập nhật đợt này?");
         if (!isConfirmed) return;
+    
+        // Chuyển trạng thái thành boolean
+        const chapThuan = trangThaiMoi === "Chưa diễn ra";
+    
         try {
-            const response = await axios.put(`/api/dotbaucu/capnhat/${id}`, { trangThaiMoi });
+            const response = await axios.post(`/api/dotbaucu/xetduyet/${id}`, { chapThuan, privateKey });
             alert(response.data.message);
             window.location.reload();
         } catch (error) {
@@ -117,6 +127,7 @@ function ElectionPage() {
             alert(error.response?.data?.message || "Lỗi khi cập nhật đợt bầu cử!");
         }
     };
+    
 
     return (
         <MainLayout>
@@ -158,7 +169,7 @@ function ElectionPage() {
                             </div>
 
                             <div className='col-span-2 py-4 text-center'>
-                            {user?.roleND === "ELECTION_VERIFIER" && election.trangThai === "Chờ xét duyệt" ? (
+                            {user?.roleND === "ADMIN" && election.trangThai === "Chờ xét duyệt" ? (
                                 <div className="flex gap-1 justify-center items-center">
                                     <button className="bg-green-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
                                         hover:bg-green-700 transition-all duration-300 ease-in-out shadow-md"
