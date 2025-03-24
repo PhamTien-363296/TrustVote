@@ -1,6 +1,7 @@
 import express from "express";
-import { capNhatMatKhau, capNhatTrangThaiCuTri, dangXuat, danhNhap, getMe, guiOTP, layCutriTheoCCCD, layDanhSachCuTri, themCutri, themPhieuBau, xacThucOTP, xoaCutri } from "../controllers/cutri.controller.js";
+import { capNhatMatKhau, capNhatTrangThaiCuTri, dangXuat, danhNhap, getMe, guiOTP, kiemTraThamGiaDotBauCu, layCutriTheoCCCD, layDanhSachCuTri, themCutri, themPhieuBau, xacThucOTP, xoaCutri } from "../controllers/cutri.controller.js";
 import { protectRoute, protectRoute2 } from "../middleware/protectRoute.js"
+import { layKetQuaBauCu } from "../controllers/donvibaucu.controller.js";
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.delete("/xoa/:id",protectRoute,xoaCutri)
 router.put("/capnhat/:id",protectRoute,capNhatTrangThaiCuTri)
 
 router.post("/themphieubau",protectRoute2,themPhieuBau)
+router.get("/kiemtrathamgia",protectRoute2,kiemTraThamGiaDotBauCu)
 
 export default router;

@@ -63,7 +63,7 @@ export const layDanhSachCuTri = async (req, res) => {
         .populate({
             path: "idNguoiDuyet",
             select: "username",
-            match: { _id: { $ne: null } } // Chỉ populate nếu khác null
+            match: { _id: { $ne: null } }
         })
         .select("-matKhau")
         .sort({ hoVaTen: 1 });
@@ -290,6 +290,9 @@ export const themPhieuBau = async (req, res) => {
     try {
         const idCuTri = req.cutri._id;
         const { matKhau, ungCuVien, idDotBauCu, idDonViBauCu } = req.body;
+        console.log("idCuTri:", idCuTri);
+        console.log("idDotBauCu:", idDotBauCu); 
+        console.log("idDonViBauCu:", idDonViBauCu);
 
         const cuTri = await CuTri.findById(idCuTri);
         if (!cuTri) {
@@ -339,6 +342,74 @@ export const themPhieuBau = async (req, res) => {
         }
     } catch (error) {
         console.error("Lỗi hệ thống:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+    }
+};
+
+export const kiemTraThamGia = async (req, res) => {
+    try {
+        const idCuTri = req.cutri._id;
+        const {idDotBauCu } = req.body;
+
+        const cuTri = await CuTri.findById(idCuTri);
+        if (!cuTri) {
+            return res.status(404).json({ message: "Không tìm thấy cử tri!" });
+        }
+
+        // let signer;
+        // try {
+        //     signer = new ethers.Wallet(privateKey, provider);
+        // } catch (error) {
+        //     return res.status(400).json({ message: "Private Key không hợp lệ!" });
+        // }
+
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        try {
+            console.log("Đang gửi giao dịch duyệt sản phẩm lên Blockchain...");
+            const tx = await contract.hasVoted(idCuTri.toString(), idDotBauCu);
+            console.log("Giao dịch đã gửi:", tx.hash);
+            await tx.wait();
+            console.log("Duyệt sản phẩm thành công trên blockchain!");
+
+            cuTri.thamGiaBauCu.push({ maDotBauCu: idDotBauCu, maDonViBauCu: idDonViBauCu });
+            await cuTri.save();
+
+            return res.json({ message: "Phiếu bầu đã được thêm!", txHash: tx.hash });
+        } catch (err) {
+            console.error("Lỗi khi gửi giao dịch:", err);
+            return res.status(500).json({ message: "Lỗi thêm vote", error: err.message });
+        }
+    } catch (error) {
+        console.error("Lỗi hệ thống:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+    }
+};
+
+export const kiemTraThamGiaDotBauCu = async (req, res) => {
+    try {
+        const idCuTri = req.cutri._id;
+        const { idDotBauCu } = req.query;
+
+        if (!idDotBauCu) {
+            return res.status(400).json({ message: "Thiếu ID đợt bầu cử!" });
+        }
+
+        const cuTri = await CuTri.findById(idCuTri);
+        if (!cuTri) {
+            return res.status(404).json({ message: "Không tìm thấy cử tri!" });
+        }
+
+        const daThamGia = cuTri.thamGiaBauCu.some(
+            (thamGia) => thamGia.maDotBauCu.toString() === idDotBauCu
+        );
+
+        return res.json({
+            message: daThamGia ? "Cử tri đã tham gia đợt bầu cử này!" : "Cử tri chưa tham gia đợt bầu cử này!",
+            daThamGia
+        });
+    } catch (error) {
+        console.error("Lỗi kiểm tra tham gia bầu cử:", error);
         return res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
     }
 };
