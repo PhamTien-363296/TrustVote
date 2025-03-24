@@ -12,13 +12,19 @@ function CandidatesPage() {
     const [ungCuVienList, setUngCuVienList] = useState([]);
     const [ungCuVien, setUngCuVien] = useState(null);
     const [donViBauCuList, setDonViBauCuList] = useState([]);
+    const [dotBauCuDaChon, setDotBauCuDaChon] = useState(null);
+    const [dotBauCuList, setDotBauCuList] = useState([]);
 
     const [moThem, setMoThem] = useState(false)
     const [moChiTiet, setMoChiTiet] = useState(false)
 
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
     const [ungCuVienMoi, setUngCuVienMoi] = useState({
         hinhAnh: "",
         idDonViBauCu: "",
+        idDotBauCu: "",
         hoVaTen: "",
         ngaySinh: "",
         gioiTinh: "",
@@ -48,36 +54,63 @@ function CandidatesPage() {
     const [capTinhList, setCapTinhList] = useState([]);
     const [capHuyenList, setCapHuyenList] = useState([]);
     const [capXaList, setCapXaList] = useState([]);
-    
-    useEffect(() => {
-        const fetchCuTri = async () => {
-            try {
-                const response = await axios.get("/api/ungcuvien/lay");
-                //console.log(response.data)
-                setUngCuVienList(response.data);
-            } catch (err) {
-                console.error("Lỗi API:", err);
-            }
-        };
-        fetchCuTri();
-    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const responseDonVi = await axios.get("/api/donvi/lay/dv/chuadienra");
-                setDonViBauCuList(responseDonVi.data);
-                console.log(responseDonVi.data)
-                const responseTinhThanh = await axios.get("https://provinces.open-api.vn/api/?depth=1");
-                setCapTinhList(responseTinhThanh.data || []);
-            } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
-                setCapTinhList([]);
+                const [donViRes, dotBauCuRes, tinhThanhRes] = await Promise.all([
+                    axios.get("/api/donvi/lay/dv/chuadienra"),
+                    axios.get("/api/dotbaucu/lay/daduyet"),
+                    axios.get("https://provinces.open-api.vn/api/?depth=1")
+                ]);
+    
+                setDonViBauCuList(donViRes.data);
+                setCapTinhList(tinhThanhRes.data || []);
+                setDotBauCuList(dotBauCuRes.data);
+    
+                // Chọn đợt bầu cử mặc định nếu có
+                const dotBauCuMacDinh = dotBauCuRes.data.length > 0 ? dotBauCuRes.data[0] : null;
+                setDotBauCuDaChon(dotBauCuMacDinh);
+                console.log("dotBauCuMacDinh", dotBauCuMacDinh);
+                setUngCuVienMoi((prev) => ({
+                    ...prev,
+                    idDotBauCu: dotBauCuMacDinh._id,
+                }));
+    
+                // Nếu có đợt bầu cử mặc định, tải danh sách ứng cử viên theo đợt đó
+                if (dotBauCuMacDinh) {
+                    await layUngCuVienTheoDot(dotBauCuMacDinh._id);
+                }
+            } catch (err) {
+                console.error("Lỗi khi tải dữ liệu:", err);
+                setError("Lỗi khi tải dữ liệu!");
+            } finally {
+                setLoading(false);
             }
         };
     
         fetchData();
-    }, []);    
+    }, []);
+    
+    useEffect(() => {
+        console.log("dotBauCuDaChon", dotBauCuDaChon);
+        console.log("ungCuVienMoi", ungCuVienMoi);
+    }, [dotBauCuDaChon, ungCuVienMoi]);
+
+    useEffect(() => {
+        if (dotBauCuDaChon) {
+            layUngCuVienTheoDot(dotBauCuDaChon._id);
+        }
+    }, [dotBauCuDaChon]);
+    
+    const layUngCuVienTheoDot = async (dotBauCuId) => {
+        try {
+            const ungCuVienRes = await axios.get(`/api/ungcuvien/laytheodot/${dotBauCuId}`);
+            setUngCuVienList(ungCuVienRes.data);
+        } catch (err) {
+            console.error("Lỗi khi tải danh sách ứng cử viên:", err);
+        }
+    };    
 
     const xuLyThayDoiCapTinh = async (e) => {
         const tinhId = e.target.value;
@@ -101,8 +134,6 @@ function CandidatesPage() {
             }            
         }
     };   
-
-    console.log("user", user)
 
     const xuLyChonHuyen = async (e) => {
         const selectedOption = e.target.options[e.target.selectedIndex];
@@ -270,16 +301,37 @@ function CandidatesPage() {
         }
     };
 
+    if (loading) return <MainLayout><p>Đang tải...</p></MainLayout>;
+
+    if (error) return <p>{error}</p>;
+
     return (
         <MainLayout>
             <div className='w-full h-full p-3'>
                 <div className='flex justify-between items-center mb-3 cursor-pointer'>
                     <h1 className='text-blue-950 text-4xl font-extrabold'>DANH SÁCH ỨNG CỬ VIÊN</h1>
                     <div className='flex gap-3'>
-                        {/* <div className='rounded-full shadow-lg px-7 py-2 text-blue-950 border-2 bg-slate-100 border-blue-950 w-fit font-medium 
-                        hover:bg-blue-800 hover:text-white hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'>
-                            Lọc
-                        </div> */}
+                    <select
+                        className="rounded-full shadow-lg px-4 py-2 border border-blue-950 text-blue-950 font-medium cursor-pointer hover:bg-blue-950 hover:text-white"
+                        value={dotBauCuDaChon?._id || ""}
+                        onChange={(e) => {
+                            const dotBauCuMoi = dotBauCuList.find((d) => d._id === e.target.value);
+                            if (dotBauCuMoi) {
+                                setDotBauCuDaChon(dotBauCuMoi);
+                                setUngCuVienMoi((prev) => ({
+                                    ...prev,
+                                    idDotBauCu: dotBauCuMoi._id,
+                                }));
+                            }
+                        }}
+                    >
+                        <option value="" disabled>Chọn đợt bầu cử</option>
+                        {dotBauCuList.map((d) => (
+                            <option key={d._id} value={d._id}>
+                                {d.tenDotBauCu}
+                            </option>
+                        ))}
+                    </select>
                     {user?.roleND  === "CANDIDATE_MANAGER" && (
                         <div className='rounded-full shadow-lg px-7 py-3 bg-blue-950 text-white w-fit font-medium hover:bg-blue-800 hover:scale-105 hover:shadow-xl transition-all duration-300 ease-in-out'
                             onClick={() => setMoThem(true)}>

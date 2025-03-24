@@ -69,7 +69,6 @@ export const themDotBauCu = async (req, res) => {
     }
 };
 
-
 export const xetDuyetDotBauCu = async (req, res) => {
     try {
         const { id } = req.params;
@@ -89,7 +88,6 @@ export const xetDuyetDotBauCu = async (req, res) => {
             return res.status(403).json({ message: "Bạn không có quyền duyệt bầu cử!" });
         }
 
-     
         const dotBauCu = await DotBauCu.findById(id);
         if (!dotBauCu) {
             return res.status(404).json({ message: "Không tìm thấy đợt bầu cử!" });
@@ -98,7 +96,6 @@ export const xetDuyetDotBauCu = async (req, res) => {
             return res.status(400).json({ message: "Đợt bầu cử này đã được xét duyệt trước đó!" });
         }
 
-        // Kiểm tra private key có khớp với admin không
         const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
         const signer = new ethers.Wallet(privateKey, provider);
         const adminAddress = nguoiDuyet.address; 
@@ -110,7 +107,6 @@ export const xetDuyetDotBauCu = async (req, res) => {
             return res.status(403).json({ message: "Private key không khớp với tài khoản admin!" });
         }
 
-      
         dotBauCu.trangThai = chapThuan ? "Chưa diễn ra" : "Từ chối";
         dotBauCu.idNguoiDuyet = nguoiDuyet._id;
         await dotBauCu.save();
@@ -148,8 +144,6 @@ export const xetDuyetDotBauCu = async (req, res) => {
         res.status(500).json({ message: "Lỗi server!", error: error.message });
     }
 };
-
-
 
 export const layDotBauCuChuaDienRa = async (req, res) => {
     try {

@@ -11,7 +11,7 @@ import DotBauCu from "../models/dotbaucu.model.js";
 export const themUngCuVien = async (req, res) => {
     try {
         const {
-            hinhAnh, idDonViBauCu, hoVaTen, ngaySinh, gioiTinh, quocTich, danToc, tonGiao, queQuan, noiO,
+            hinhAnh, idDonViBauCu, idDotBauCu, hoVaTen, ngaySinh, gioiTinh, quocTich, danToc, tonGiao, queQuan, noiO,
             trinhDoHocVan, ngheNghiep, noiCongTac, ngayVaoDang, laDaiBieuQH, laDaiBieuHDND,
         } = req.body;
 
@@ -51,6 +51,7 @@ export const themUngCuVien = async (req, res) => {
         const ungCuVienMoi = new UngCuVien({
             hinhAnh: anhSPUrl,
             idDonViBauCu,
+            idDotBauCu,
             hoVaTen,
             ngaySinh,
             gioiTinh,
@@ -109,6 +110,28 @@ export const layDanhSachUngCuVien = async (req, res) => {
         return res.status(200).json(danhSach);
     } catch (error) {
         console.error("Lỗi khi lấy danh sách ứng cử viên:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ!" });
+    }
+};
+
+export const layDanhSachUngCuVienTheoDot = async (req, res) => {
+    try {
+        const { idDotBauCu } = req.params;
+        if (!idDotBauCu) {
+            return res.status(400).json({ message: "Thiếu idDotBauCu!" });
+        }
+        const danhSach = await UngCuVien.find({ idDotBauCu: idDotBauCu })
+            .populate("idNguoiTao", "username")
+            .populate({
+                path: "idNguoiDuyet",
+                select: "username",
+                match: { _id: { $ne: null } }
+            })
+
+        console.log(danhSach)
+        return res.status(200).json(danhSach);
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách đơn vị bầu cử:", error);
         return res.status(500).json({ message: "Lỗi máy chủ!" });
     }
 };
