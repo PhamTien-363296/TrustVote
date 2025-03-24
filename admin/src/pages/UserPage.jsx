@@ -18,6 +18,7 @@ function UserPage() {
     const [userNew, setUserNew] = useState({
         username: "",
         email: "",
+        address:"",
         matKhau: "",
         moTaND: "",
         roleND: "",
@@ -67,6 +68,7 @@ function UserPage() {
                 setUserNew({
                     username: "",
                     email: "",
+                    address:"",
                     matKhau: "",
                     moTaND: "",
                     roleND: "",
@@ -108,23 +110,27 @@ function UserPage() {
                     )}
                 </div>
                 <div className='border-2 border-blue-950'>
-                    <div className='w-full bg-blue-950 text-white grid grid-cols-18 items-center font-semibold'>
+                    <div className='w-full bg-blue-950 text-white grid grid-cols-22 items-center font-semibold'>
                         <div className='col-span-1 text-center border-r py-4 uppercase'>#</div>
-                        <div className='col-span-3 text-center border-r py-4 uppercase'>Id</div>
-                        <div className='col-span-3 border-r py-4 text-center uppercase'>Username</div>
-                        <div className='col-span-4 border-r py-4 text-center uppercase'>Email</div>
-                        <div className='col-span-2 border-r py-4 text-center uppercase'>Vai trò</div>
+                        <div className='col-span-4 text-center border-r py-4 uppercase'>Id</div>
+                        <div className='col-span-2 border-r py-4 text-center uppercase'>Username</div>
+                        <div className='col-span-3 border-r py-4 text-center uppercase'>Email</div>
+                        <div className='col-span-4 border-r py-4 text-center uppercase'>Address</div>
+                        <div className='col-span-3 border-r py-4 text-center uppercase'>Vai trò</div>
                         <div className='col-span-1 border-r py-4 text-center uppercase'>Mở</div>
                         <div className='col-span-2 border-r py-4 text-center uppercase'>Trạng thái</div>
                         <div className='col-span-2 py-4 text-center uppercase'>Hành động</div>
                     </div>
                     {userList.map((u, index) => (
-                        <div key={u._id} className='w-full shadow-md grid grid-cols-18 items-center border-b odd:bg-gray-100 even:bg-white'>
+                        <div key={u._id} className='w-full shadow-md grid grid-cols-22 items-center border-b odd:bg-gray-100 even:bg-white'>
                             <div className='col-span-1 text-center border-r py-4'>{index+1}</div>
-                            <div className='col-span-3 text-center border-r py-4'>{u._id}</div>
-                            <div className='col-span-3 border-r py-4 text-center'>{u.username}</div>
-                            <div className='col-span-4 border-r py-4 text-center'>{u.email}</div>
-                            <div className='col-span-2 border-r py-4 text-center'>{u.roleND}</div>
+                            <div className='col-span-4 text-center border-r py-4'>{u._id}</div>
+                            <div className='col-span-2 border-r py-4 text-center'>{u.username}</div>
+                            <div className='col-span-3 border-r py-4 text-center'>{u.email}</div>
+                            <div className='col-span-4 border-r py-4 text-center'>
+                            {u.address?.slice(0, 15) || 'N/A'}...
+                            </div>
+                            <div className='col-span-3 border-r py-4 text-center'>{u.roleND}</div>
                             <div className='col-span-1 border-r py-4 text-center'>
                                 {u.lanDau ? "Chưa" : "Rồi"}
                             </div>
@@ -164,6 +170,7 @@ function UserPage() {
                                         setUserNew({
                                             username: "",
                                             email: "",
+                                            address:"",
                                             matKhau: "",
                                             moTaND: "",
                                             roleND: "",
@@ -193,6 +200,17 @@ function UserPage() {
                                     onChange={handleChange}
                                     className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                             </div>
+                            {userNew.roleND === "ELECTION_VERIFIER" && (
+                                    <div>
+                                        <label className="block font-medium mb-2">Address:</label>
+                                        <input 
+                                            type="text"
+                                            name="address"
+                                            value={userNew.address}
+                                            onChange={handleChange}
+                                            className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                                    </div>
+                                )}
                             <div>
                                 <label className="block font-medium mb-2">Mật khẩu</label>
                                 <input 
@@ -212,13 +230,20 @@ function UserPage() {
                                     className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                             </div>
                             <div>
-                                <label className="block font-medium mb-2">Vai trò:</label>
-                                <input 
-                                    type="text" 
-                                    name="roleND"
-                                    value={userNew.roleND}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                            <label className="block font-medium mb-2">Vai trò:</label>
+                            <select
+                                name="roleND"
+                                value={userNew.roleND}
+                                onChange={handleChange}
+                                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Chọn vai trò</option>
+                                {["ELECTION_CREATOR", "DISTRICT_MANAGER", "CANDIDATE_MANAGER", "VOTER_MANAGER", "ELECTION_VERIFIER"].map(role => (
+                                <option key={role} value={role}>
+                                    {role}
+                                </option>
+                                ))}
+                            </select>
                             </div>
                             <button type="submit" className="mt-5 w-full bg-blue-800 text-white py-2 rounded-lg cursor-pointer hover:bg-blue-900 transition">
                                 Thêm người dùng

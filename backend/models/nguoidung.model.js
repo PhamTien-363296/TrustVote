@@ -23,6 +23,9 @@ const nguoidungSchema = new mongoose.Schema(
         moTaND: {
 			type: String,
 		},
+        address:{
+            type: String,
+        },
         roleND: {
 			type: String,
             required: true,
