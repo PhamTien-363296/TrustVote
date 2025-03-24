@@ -3,7 +3,6 @@ import MainLayout from '../layouts/MainLayout'
 import axios from "axios";
 import { MdClose } from "react-icons/md";
 import { useAuth } from "../context/AuthContext2";
-import moment from "moment";
 import CandidateDetail from "../components/CandidateDetail";
 import CandidateForm from "../components/CandidateForm";
 
@@ -245,10 +244,21 @@ function CandidatesPage() {
     };
 
     const handleUpdateD = async (id) => {
-        const isConfirmed = window.confirm("Bạn có chắc chắn muốn duyệt ứng cử viên này này?");
+        const isConfirmed = window.confirm("Bạn có chắc chắn muốn duyệt ứng cử viên này?");
         if (!isConfirmed) return;
+    
+        const privateKey = window.prompt("Vui lòng nhập private key để xác nhận:");
+        if (!privateKey) {
+            alert("Bạn cần nhập private key để tiếp tục!");
+            return;
+        }
+    
         try {
-            const response = await axios.post(`/api/ungcuvien/duyet`, { candidateId: id });
+            const response = await axios.post(`/api/ungcuvien/duyet`, { 
+                candidateId: id, 
+                privateKey 
+            });
+    
             alert(response.data.message);
             window.location.reload();
         } catch (error) {
@@ -256,6 +266,7 @@ function CandidatesPage() {
             alert(error.response?.data?.message || "Lỗi khi cập nhật ứng cử viên!");
         }
     };
+    
 
     const handleUpdateTC = async (id, trangThaiMoi) => {
         const isConfirmed = window.confirm("Bạn có chắc chắn muốn từ chối ứng cử viên này này?");
@@ -310,7 +321,7 @@ function CandidatesPage() {
                         }}>
                         <div className='col-span-1 text-center border-r py-4'>{index + 1}</div>
                         <div className='col-span-3 border-r py-4 text-center'>{c.hoVaTen}</div>
-                        <div className='col-span-2 border-r py-4 text-center'>{moment(c.ngaySinh).format("DD/MM/YYYY")}</div>
+                        <div className='col-span-2 border-r py-4 text-center'>{c.ngaySinh}</div>
                         <div className='col-span-2 border-r py-4 text-center'>{c.gioiTinh}</div>
                         <div className='col-span-2 border-r py-4 text-center'>{c.quocTich}</div>
                         <div className='col-span-2 border-r py-4 text-center'>{c.danToc}</div>

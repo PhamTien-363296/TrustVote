@@ -1,6 +1,9 @@
 import DonViBauCu from '../models/donvibaucu.model.js';
 import NguoiDung from '../models/nguoidung.model.js';
-
+import { ethers } from "ethers";
+import dotenv from "dotenv"
+import abi from "../abi.js";
+dotenv.config();
 import moment from 'moment';
 
 const taoMaDonViBauCu = (thoiGianTao) => {
@@ -159,41 +162,50 @@ export const xoaDonViBauCu = async (req, res) => {
 export const capNhatTrangThaiDonVi = async (req, res) => {
     try {
         const { id } = req.params;
-        const { trangThaiMoi } = req.body;
+        const { trangThaiMoi, privateKey } = req.body;
         const idNguoiDuyet = req.nguoidung._id;
 
+        // Kiểm tra người duyệt có quyền hay không
         const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
-        if (!nguoiDuyet) {
-            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
-        }
-
-        if (nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
+        if (!nguoiDuyet || nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
             return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
         }
 
+       
         const donVi = await DonViBauCu.findById(id);
-        if (!donVi) {
-            return res.status(404).json({ message: "Không tìm thấy đơn vị bầu cử!" });
-        }
-
-        if (donVi.trangThai !== "Chờ xét duyệt") {
+        if (!donVi || donVi.trangThai !== "Chờ xét duyệt") {
             return res.status(400).json({
                 message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
             });
         }
 
+     
         donVi.trangThai = trangThaiMoi;
         donVi.idNguoiDuyet = idNguoiDuyet;
         donVi.thoiGianDuyet = new Date();
-
         await donVi.save();
 
+     
+        const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
+        const signer = new ethers.Wallet(privateKey, provider);
+        const contractAddress = process.env.CONTRACT_ADDRESS;
+
+        const contract = new ethers.Contract(contractAddress, abi, signer);
+        const electionId = donVi.idDotBauCu.toString();
+        const districtId = donVi._id.toString();
+        const numWinners = donVi.soDaiBieuDuocBau;
+
+    
+        const tx = await contract.addDistrict(electionId, districtId, numWinners);
+        await tx.wait(); 
+
         res.status(200).json({
-            message: "Cập nhật trạng thái thành công!"
+            message: "Cập nhật trạng thái và lưu blockchain thành công!",
+            txHash: tx.hash
         });
 
     } catch (error) {
-        console.error("Lỗi capNhatTrangThaiDonVi controller:", error.message);
+        console.error("Lỗi capNhatTrangThaiDonVi:", error.message);
         res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
     }
 };

@@ -1,12 +1,13 @@
 import UngCuVien from "../models/ungcuvien.model.js";
 import Nguoidung from "../models/nguoidung.model.js";
-import Web3 from "web3";
-import contractABI from "../config/ABI.js";
-import contractAddr from '../config/ContractAddress.js';
 import {v2 as cloudinary} from 'cloudinary'
 import CuTri from "../models/cutri.model.js";
 import DonViBauCu from "../models/donvibaucu.model.js";
 import DotBauCu from "../models/dotbaucu.model.js";
+import { ethers } from "ethers";
+import dotenv from "dotenv"
+import abi from "../abi.js";
+dotenv.config();
 
 export const themUngCuVien = async (req, res) => {
     try {
@@ -140,14 +141,19 @@ export const xoaUngCuVien = async (req, res) => {
     }
 };
 
+
 export const duyetUngCuVien = async (req, res) => {
     try {
-        const { candidateId } = req.body;
+        const { candidateId, privateKey } = req.body;
         const idNguoiDuyet = req.nguoidung._id;
 
         const nguoiDuyet = await Nguoidung.findById(idNguoiDuyet);
         if (!nguoiDuyet) {
             return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+        }
+
+        if (!privateKey) {
+            return res.status(400).json({ message: "Cần nhập private key để duyệt bầu cử!" });
         }
 
         if (nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
@@ -159,52 +165,51 @@ export const duyetUngCuVien = async (req, res) => {
             return res.status(404).json({ message: "Không tìm thấy ứng cử viên!" });
         }
 
+        const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
+        const signer = new ethers.Wallet(privateKey, provider);
+        const adminAddress = nguoiDuyet.address; 
+
+        if (signer.address.toLowerCase() !== adminAddress.toLowerCase()) {
+            return res.status(403).json({ message: "Private key không khớp với tài khoản admin!" });
+        }
+
         if (candidate.trangThai !== "Chờ xét duyệt") {
             return res.status(400).json({
                 message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
             });
         }
 
+        
+
+        // Cập nhật trạng thái trong database
         candidate.trangThai = "Chưa diễn ra";
         candidate.idNguoiDuyet = idNguoiDuyet;
         candidate.thoiGianDuyet = new Date();
-
         await candidate.save();
 
-        // Thiết lập kết nối tới Ganache qua Web3 (đảm bảo Ganache đang chạy tại cổng 7545)
-        const web3 = new Web3("HTTP://127.0.0.1:7545");
+        // Gọi smart contract để xác nhận trên blockchain
+        const contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, abi, signer);
+        const tx = await contract.addCandidate(
+            candidate._id.toString(),                 
+            candidate.idDotBauCu.toString(),  
+            candidate.idDonViBauCu.toString(),
+            candidate.hoVaTen,               
+            candidate.ngaySinh
+        );
 
-        // Khởi tạo smart contract với ABI và địa chỉ contract
-        const contract = new web3.eth.Contract(contractABI, contractAddr);
+        await tx.wait(); // Chờ giao dịch hoàn tất
 
-        // Lấy tài khoản mặc định từ Ganache (tài khoản này cần có đủ ETH để gửi giao dịch)
-        const accounts = await web3.eth.getAccounts();
-        const defaultAccount = accounts[0];
-
-        // Gọi hàm addCandidate trên smart contract với thông tin ứng cử viên
-        // Giả sử hàm addCandidate của smart contract có dạng: addCandidate(string memory _hoVaTen, string memory _id)
-        const tx = await contract.methods
-            .addCandidate(candidate.hoVaTen.toString(), candidateId.toString())
-            .send({ from: defaultAccount, gas: 500000 });
-
-        // Hàm replacer để chuyển đổi các giá trị BigInt thành chuỗi
-        const replacer = (key, value) =>
-            typeof value === "bigint" ? value.toString() : value;
-
-        // Chuyển candidate và tx thành plain object an toàn cho JSON serialization
-        const safeCandidate = JSON.parse(JSON.stringify(candidate.toObject(), replacer));
-        const safeTx = JSON.parse(JSON.stringify(tx, replacer));
-
-        return res.status(200).json({
-            message: "Duyệt ứng cử viên thành công, dữ liệu đã được thêm vào blockchain!",
-            candidate: safeCandidate,
-            tx: safeTx,
+        return res.json({ 
+            message: "Duyệt ứng cử viên thành công trên blockchain!", 
+            transactionHash: tx.hash 
         });
+
     } catch (error) {
         console.error("Lỗi duyệt ứng cử viên:", error);
         return res.status(500).json({ message: "Lỗi server!", error: error.message });
     }
 };
+
 
 export const layUngCuVienTheoId = async (req, res) => {
     try {

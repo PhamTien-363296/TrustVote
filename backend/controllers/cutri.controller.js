@@ -1,6 +1,5 @@
 import CuTri from "../models/cutri.model.js";
 import NguoiDung from "../models/nguoidung.model.js";
-
 import sendOTP from "../lib/utils/sendOTP.js";
 import { generateOtpToken, verifyOtpToken,generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
 import bcrypt from 'bcryptjs'
@@ -55,6 +54,7 @@ export const themCutri = async (req, res) => {
         console.log( error.message )
     }
 };
+
 
 export const layDanhSachCuTri = async (req, res) => {
     try {
