@@ -18,6 +18,8 @@ function HomePage() {
   const[danhSachUngCuVien, setDanhSachUngCuVien] = useState([]);
   const[dotBauCu, setDotBauCu] = useState(null);
 
+  const [daThamGia, setDaThamGia] = useState(false);
+
   const [chonUngCu, setChonUngCu] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -31,8 +33,14 @@ function HomePage() {
           setDotBauCu(response.data.data.dotBauCu || {});
           setDonViBauCu(response.data.data.donViBauCu || {});
           setDanhSachUngCuVien(response.data.data.ungCuViens || []);
+          const idDotBauCu = response.data.data.dotBauCu?._id;
+
+          if (idDotBauCu) {
+            const response2 = await axios.get(`/api/cutri/kiemtrathamgia?idDotBauCu=${idDotBauCu}`);
+            setDaThamGia(response2.data.daThamGia || false);
+          }
         } else {
-          setError("Không có dữ liệu");
+          setError("Không có Đợt bầu cử nào Đang diễn ra");
         }
       } catch (err) {
         console.error("Lỗi khi gọi API:", err);
@@ -75,15 +83,40 @@ function HomePage() {
         setChonUngCu([]);
         setHienBauCu(false);
         setMatKhau("");
+        setHienNhapKey(false);
     } catch (err) {
         console.error("Lỗi khi gửi phiếu bầu:", err);
         alert("Lỗi khi gửi phiếu bầu!");
     }
   };
 
-  if (loading) return <div>Đang tải...</div>;
-  if (error) return <div>{error}</div>;
+  const handleClickKQ = () => {
+    console.log("ID Đơn vị bầu cử:", donViBauCu?._id); // Kiểm tra ID có tồn tại không
+    if (!donViBauCu?._id) {
+      alert("Không tìm thấy ID Đơn vị bầu cử!");
+      return;
+    }
+    navigate("/result", { state: { idDonViBauCu: donViBauCu._id } });
+  };
 
+  if (loading) return <div>Đang tải...</div>;
+  if (error) return (
+    <div className="flex flex-col items-center justify-center">
+      <div className="bg-blue-900 w-full flex items-center justify-between p-4 shadow-md">
+        <h2 className="text-white font-bold text-lg">Bầu Cử Quốc Hội</h2>
+        <button className="bg-amber-200 p-3 rounded-full hover:bg-amber-300 transition-all">
+          <FaUser className="text-blue-900 text-lg" />
+        </button>
+      </div>
+      <p className="text-gray-600 mt-4 text-lg font-semibold">{error}</p>
+      <button 
+        className="mt-4 px-5 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        onClick={() => window.location.reload()}
+      >
+        Thử lại
+      </button>
+    </div>
+  );
   // if (!dotBauCu || !donViBauCu || !danhSachUngCuVien) return <div>Không có đợt bầu cử nào</div>;
 
   return (
@@ -101,9 +134,7 @@ function HomePage() {
             {dotBauCu?.tenDotBauCu}
           </h1>
           <h2 className="font-semibold text-xl text-blue-900">
-          <h2 className="font-semibold text-xl text-blue-900">
             {moment(dotBauCu?.ngayBatDau).format("DD/MM/YYYY hh:mm:ss")} - {moment(dotBauCu?.ngayKetThuc).format("DD/MM/YYYY hh:mm:ss")}
-          </h2>
           </h2>
           <h3 className="font-semibold text-lg text-gray-700 mt-2">
             DANH SÁCH CHÍNH THỨC NHỮNG NGƯỜI ỨNG CỬ THEO TỪNG ĐƠN VỊ BẦU CỬ TRONG CẢ NƯỚC
@@ -112,8 +143,8 @@ function HomePage() {
         <div className="w-full flex justify-end mb-6">
           <button
             className="cursor-pointer bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-all"
-            onClick={() => navigate("/result")}
-          >
+            onClick={handleClickKQ}
+            >
             Xem kết quả
           </button>
         </div>
@@ -141,7 +172,7 @@ function HomePage() {
                 <h5 className="font-bold text-blue-700">
                   {donViBauCu?.tenDonVi}{": "}
                   <span className="text-gray-700">
-                    Gồm các quận: {donViBauCu?.capHuyen?.map((item) => item.ten).join(", ")}.
+                    Gồm: {donViBauCu?.capHuyen?.map((item) => item.ten).join(", ")}.
                   </span>
                 </h5>
                 <p className="text-gray-600">
@@ -154,12 +185,17 @@ function HomePage() {
                   {xemDanhSach ? "Ẩn danh sách ứng cử viên" : "Xem danh sách ứng cử viên"}
                 </a>
               </div>
-              <button
-                className="bg-blue-600 text-white px-6 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition-all"
-                onClick={() => setHienBauCu(!hienBauCu)}
-              >
-                Bầu cử
-              </button>
+              {!daThamGia ? (
+                <button
+                  className={`bg-blue-600 text-white px-6 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition-all`}
+                  onClick={() => setHienBauCu(!hienBauCu)}
+                >
+                  Bầu cử
+                </button>
+              ) : (
+                <p>Đã bầu cử</p>
+              )}
+
             </div>
 
             {xemDanhSach && (
@@ -345,7 +381,7 @@ function HomePage() {
             </h2>
             <input
               type="password"
-              placeholder="Nhập Private Key"
+              placeholder="Nhập Mật Khẩu"
               value={matKhau}
               onChange={(e) => setMatKhau(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"

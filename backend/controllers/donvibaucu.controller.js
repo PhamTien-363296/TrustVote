@@ -1,7 +1,20 @@
 import DonViBauCu from '../models/donvibaucu.model.js';
 import NguoiDung from '../models/nguoidung.model.js';
+import DotBauCu from '../models/dotbaucu.model.js';
+import bcrypt from 'bcryptjs'
 
 import moment from 'moment';
+import { ethers } from "ethers";
+import dotenv from "dotenv";
+import abi from "../abi.js";
+import CuTri from '../models/cutri.model.js';
+import UngCuVien from '../models/ungcuvien.model.js';
+
+dotenv.config();
+
+const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
+const contractAddress = process.env.CONTRACT_ADDRESS;
+const contractABI = abi; 
 
 const taoMaDonViBauCu = (thoiGianTao) => {
     const formattedStartDate = moment(thoiGianTao).format("YYMMDD");
@@ -195,5 +208,54 @@ export const capNhatTrangThaiDonVi = async (req, res) => {
     } catch (error) {
         console.error("Lỗi capNhatTrangThaiDonVi controller:", error.message);
         res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};
+
+export const layKetQuaBauCu = async (req, res) => {
+    try {
+        const idCuTri = req.cutri._id;
+        const { matKhau, idDonViBauCu } = req.query;
+
+        if (!idDonViBauCu) {
+            return res.status(400).json({ message: "Thiếu idDonVi" });
+        }
+
+        const cuTri = await CuTri.findById(idCuTri);
+        if (!cuTri) {
+            return res.status(404).json({ message: "Không tìm thấy cử tri!" });
+        }
+
+        const kiemTra_matKhau = await bcrypt.compare(matKhau, cuTri.matKhau);
+        if (!kiemTra_matKhau) {
+            return res.status(400).json({ error: "Mật khẩu không đúng" });
+        }
+
+        const privateKey = process.env.VOTER_PRIVATE_KEY;
+        if (!privateKey) {
+            return res.status(500).json({ message: "Lỗi hệ thống: Không tìm thấy Private Key trong .env" });
+        }
+
+        let signer;
+        try {
+            signer = new ethers.Wallet(privateKey, provider);
+        } catch (error) {
+            return res.status(400).json({ message: "Private Key không hợp lệ!" });
+        }
+
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        const winners = await contract.getWinners(idDonViBauCu);
+        if (!winners || winners.length === 0) {
+            return res.json({ message: "Chưa có kết quả bầu cử!", winners: [] });
+        }
+
+        const danhSachUngCuVien = await UngCuVien.find({ _id: { $in: winners } });
+
+        console.log("Thông tin người thắng:", danhSachUngCuVien);
+        
+        return res.json({ message: "Lấy kết quả thành công!", winners: danhSachUngCuVien });
+    } catch (error) {
+        console.error("Lỗi khi lấy kết quả bầu cử:", error);
+        return res.status(500).json({ message: "Lỗi khi lấy kết quả bầu cử", error: error.message });
     }
 };

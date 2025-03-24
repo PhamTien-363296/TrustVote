@@ -352,3 +352,4 @@ export const getUngCuVienByCuTri = async (req, res) => {
         return res.json({ success: false, message: "Lỗi khi lấy danh sách ứng cử viên" });
     }
 };
+
