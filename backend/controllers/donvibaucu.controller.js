@@ -1,9 +1,5 @@
 import DonViBauCu from '../models/donvibaucu.model.js';
 import NguoiDung from '../models/nguoidung.model.js';
-import { ethers } from "ethers";
-import dotenv from "dotenv"
-import abi from "../abi.js";
-dotenv.config();
 import DotBauCu from '../models/dotbaucu.model.js';
 import bcrypt from 'bcryptjs'
 
