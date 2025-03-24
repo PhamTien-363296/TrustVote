@@ -112,12 +112,8 @@ export const xetDuyetDotBauCu = async (req, res) => {
 
       
         dotBauCu.trangThai = chapThuan ? "Chưa diễn ra" : "Từ chối";
+        dotBauCu.idNguoiDuyet = nguoiDuyet._id;
         await dotBauCu.save();
-
-        console.log("Election ID:", dotBauCu._id.toString());
-console.log("Tên bầu cử:", dotBauCu.tenDotBauCu);
-
-
 
         if (chapThuan) {
             try {
@@ -126,8 +122,6 @@ console.log("Tên bầu cử:", dotBauCu.tenDotBauCu);
 
                 const startTime = Math.floor(new Date(dotBauCu.ngayBatDau).getTime() / 1000);
                 const endTime = Math.floor(new Date(dotBauCu.ngayKetThuc).getTime() / 1000);
-                console.log("Thời gian bắt đầu:", startTime);
-console.log("Thời gian kết thúc:", endTime);
 
                 console.log("Gửi transaction tạo đợt bầu cử...");
                 const tx = await contract.createElection(
