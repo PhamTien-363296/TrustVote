@@ -234,48 +234,6 @@ export const xoaCutri = async (req, res) => {
     }
 };
 
-export const capNhatTrangThaiCuTri = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { trangThaiMoi } = req.body;
-        const idNguoiDuyet = req.nguoidung._id;
-
-        const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
-        if (!nguoiDuyet) {
-            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
-        }
-
-        if (nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
-            return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
-        }
-
-        const cuTri = await CuTri.findById(id);
-        if (!cuTri) {
-            return res.status(404).json({ message: "Không tìm thấy cử tri!" });
-        }
-
-        if (cuTri.trangThai !== "Chờ xét duyệt") {
-            return res.status(400).json({
-                message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
-            });
-        }
-
-        cuTri.trangThai = trangThaiMoi;
-        cuTri.idNguoiDuyet = idNguoiDuyet;
-        cuTri.thoiGianDuyet = new Date();
-
-        await cuTri.save();
-
-        res.status(200).json({
-            message: "Cập nhật trạng thái thành công!"
-        });
-
-    } catch (error) {
-        console.error("Lỗi capNhatTrangThaiCuTri controller:", error.message);
-        res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
-    }
-};
-
 import { ethers } from "ethers";
 import abi from "../abi.js";
 import dotenv from "dotenv";
@@ -285,6 +243,58 @@ dotenv.config();
 const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
 const contractAddress = process.env.CONTRACT_ADDRESS;
 const contractABI = abi; 
+export const capNhatTrangThaiCuTri = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { trangThaiMoi, privateKey } = req.body;
+        const idNguoiDuyet = req.nguoidung._id;
+
+       
+        const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
+        if (!nguoiDuyet || nguoiDuyet.roleND !== "ELECTION_VERIFIER") {
+            return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
+        }
+
+       
+        const cuTri = await CuTri.findById(id);
+        if (!cuTri || cuTri.trangThai !== "Chờ xét duyệt") {
+            return res.status(400).json({
+                message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
+            });
+        }
+
+
+
+       
+        const signer = new ethers.Wallet(privateKey, provider);
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        console.log(signer)
+        
+        const voterId = cuTri._id.toString(); 
+        console.log(voterId)
+
+     
+        const tx = await contract.addVoter(voterId);
+        await tx.wait(); 
+
+        cuTri.trangThai = trangThaiMoi;
+        cuTri.idNguoiDuyet = idNguoiDuyet;
+        cuTri.thoiGianDuyet = new Date();
+        await cuTri.save();
+
+
+        res.status(200).json({
+            message: "Cập nhật trạng thái và lưu blockchain thành công!",
+            txHash: tx.hash
+        });
+
+    } catch (error) {
+        console.error("Lỗi capNhatTrangThaiCuTri:", error.message);
+        res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};
+
 
 export const themPhieuBau = async (req, res) => {
     try {

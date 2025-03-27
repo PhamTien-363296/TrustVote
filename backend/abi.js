@@ -1,4 +1,4 @@
-const abi = [
+const abi =[
 	{
 		"inputs": [
 			{
@@ -78,11 +78,6 @@ const abi = [
 			{
 				"internalType": "string",
 				"name": "_voterId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_electionId",
 				"type": "string"
 			}
 		],
@@ -300,12 +295,6 @@ const abi = [
 				"indexed": false,
 				"internalType": "string",
 				"name": "voterId",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "electionId",
 				"type": "string"
 			}
 		],
@@ -580,25 +569,6 @@ const abi = [
 	{
 		"inputs": [
 			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"name": "hasVoted",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
 				"internalType": "address",
 				"name": "",
 				"type": "address"
@@ -667,6 +637,6 @@ const abi = [
 		"stateMutability": "view",
 		"type": "function"
 	}
-];
+]
 
 export default abi;

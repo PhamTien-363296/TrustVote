@@ -15,7 +15,7 @@ export const layDotBauCu = async (req, res) => {
         .populate({
             path: "idNguoiDuyet",
             select: "username",
-            match: { _id: { $ne: null } } // Chỉ populate nếu khác null
+            match: { _id: { $ne: null } } 
         });
 
         res.status(200).json(dotBauCuList);

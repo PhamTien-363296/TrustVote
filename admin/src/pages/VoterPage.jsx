@@ -175,15 +175,28 @@ function VoterPage() {
     const handleUpdate = async (id, trangThaiMoi) => {
         const isConfirmed = window.confirm("Bạn có chắc chắn muốn cập nhật cử tri này?");
         if (!isConfirmed) return;
+    
+        
+        const privateKey = prompt("Nhập private key để ký giao dịch:");
+        if (!privateKey) {
+            alert("Bạn cần nhập private key!");
+            return;
+        }
+    
         try {
-            const response = await axios.put(`/api/cutri/capnhat/${id}`, { trangThaiMoi });
-            alert(response.data.message);
+            const response = await axios.put(`/api/cutri/capnhat/${id}`, { 
+                trangThaiMoi, 
+                privateKey 
+            });
+            
+            alert("Duyệt thành công", response);
             window.location.reload();
         } catch (error) {
             console.error("Lỗi khi cập nhật:", error);
             alert(error.response?.data?.message || "Lỗi khi cập nhật cử tri!");
         }
     };
+    
     
 
     // if (loading) return <p>Đang tải...</p>;
