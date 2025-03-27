@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaUser } from "react-icons/fa";
+import { AiOutlineLogout } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import moment from "moment";
@@ -99,23 +100,37 @@ function HomePage() {
     navigate("/result", { state: { idDonViBauCu: donViBauCu._id } });
   };
 
+  const handleLogout = async () => {
+    try {
+      await axios.post("/api/auth/logout", {}, { withCredentials: true });
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất:", error);
+    }
+  };
+
   if (loading) return <div>Đang tải...</div>;
   if (error) return (
-    <div className="flex flex-col items-center justify-center">
-      <div className="bg-blue-900 w-full flex items-center justify-between p-4 shadow-md">
-        <h2 className="text-white font-bold text-lg">Bầu Cử Quốc Hội</h2>
-        <button className="bg-amber-200 p-3 rounded-full hover:bg-amber-300 transition-all">
-          <FaUser className="text-blue-900 text-lg" />
-        </button>
-      </div>
-      <p className="text-gray-600 mt-4 text-lg font-semibold">{error}</p>
-      <button 
-        className="mt-4 px-5 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-        onClick={() => window.location.reload()}
-      >
-        Thử lại
+<div className="flex flex-col items-center justify-center">
+  <div className="bg-blue-900 w-full flex items-center justify-between p-4 shadow-md">
+    <h2 className="text-white font-bold text-lg">Bầu Cử Quốc Hội</h2>
+    <div className="flex items-center gap-4">
+      <button className="bg-amber-200 p-3 rounded-full hover:bg-amber-300 transition-all">
+        <FaUser className="text-blue-900 text-lg" />
+      </button>
+      <button onClick={handleLogout} className="text-white text-lg">
+        <AiOutlineLogout />
       </button>
     </div>
+  </div>
+  <p className="text-gray-600 mt-4 text-lg font-semibold">{error}</p>
+  <button 
+    className="mt-4 px-5 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+    onClick={() => window.location.reload()}
+  >
+    Thử lại
+  </button>
+</div>
   );
   // if (!dotBauCu || !donViBauCu || !danhSachUngCuVien) return <div>Không có đợt bầu cử nào</div>;
 

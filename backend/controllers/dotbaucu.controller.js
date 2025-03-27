@@ -1,5 +1,7 @@
 import DotBauCu from "../models/dotbaucu.model.js";
 import NguoiDung from "../models/nguoidung.model.js";
+import DonViBauCu from "../models/donvibaucu.model.js";
+import UngCuVien from "../models/ungcuvien.model.js";
 import { ethers } from "ethers";
 import moment from "moment";
 import dotenv from "dotenv" 
@@ -245,8 +247,26 @@ export const capNhatTrangThaiDot = async (req, res) => {
         let tx;
         if (trangThaiMoi === "Đang diễn ra") {
             tx = await contract.startElection(dotBauCu._id.toString());
+            await UngCuVien.updateMany(
+                { idDotBauCu: id }, 
+                { $set: { trangThai: "Đang diễn ra" } }
+            );
+            await DonViBauCu.updateMany(
+                { idDotBauCu: id }, 
+                { $set: { trangThai: "Đang diễn ra" } }
+            );
+            console.log(` Đã cập nhật trạng thái ứng cử viên của đợt bầu cử ${id}`);
         } else if (trangThaiMoi === "Đã kết thúc") {
             tx = await contract.endElection(dotBauCu._id.toString());
+            await UngCuVien.updateMany(
+                { idDotBauCu: id }, 
+                { $set: { trangThai: "Đã kết thúc" } }
+            );
+            await DonViBauCu.updateMany(
+                { idDotBauCu: id }, 
+                { $set: { trangThai: "Đã kết thúc" } }
+            );
+            console.log(`Đã cập nhật trạng thái ứng cử viên của đợt bầu cử ${id}`);
         }
 
         if (tx) await tx.wait();
