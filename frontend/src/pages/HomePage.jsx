@@ -246,7 +246,7 @@ function HomePage() {
                   <span className="font-bold">Họ và tên:</span> {xemThongTin.hoVaTen}
                 </p>
                 <p className="text-sm text-gray-700">
-                  <span className="font-bold">Ngày tháng năm sinh:</span> {moment(xemThongTin?.ngaySinh).format("DD/MM/YYYY")}
+                  <span className="font-bold">Tuổi:</span> {xemThongTin.ngaySinh}
                 </p>
                 <p className="text-sm text-gray-700">
                   <span className="font-bold">Giới tính:</span> {xemThongTin.gioiTinh}

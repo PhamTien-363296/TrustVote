@@ -109,7 +109,7 @@ function VoterPage() {
     
     const xuLyChonXa = (e) => {
         const selectedOption = e.target.options[e.target.selectedIndex];
-    
+
         setCuTri((prev) => ({
             ...prev,
             diaChi: {

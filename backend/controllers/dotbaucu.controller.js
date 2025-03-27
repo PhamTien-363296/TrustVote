@@ -147,12 +147,16 @@ export const xetDuyetDotBauCu = async (req, res) => {
 
 export const layDotBauCuChuaDienRa = async (req, res) => {
     try {
-        const dotBauCuList = await DotBauCu.find({ trangThai: "Chưa diễn ra" });
+        const dotBauCuList = await DotBauCu.find({
+            trangThai: { $ne: "Chờ xét duyệt" }
+        });
+
         res.status(200).json(dotBauCuList);
     } catch (error) {
         res.status(500).json({ message: "Lỗi khi lấy danh sách đợt bầu cử chưa diễn ra!", error });
     }
 };
+
 
 export const xoaDotBauCu = async (req, res) => {
     try {
@@ -183,44 +187,44 @@ export const xoaDotBauCu = async (req, res) => {
     }
 };
 
-// export const capNhatTrangThaiDot = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const { trangThaiMoi } = req.body;
-//         const idNguoiDuyet = req.nguoidung._id;
+export const capNhatTrangThaiDot = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { trangThaiMoi, privateKey } = req.body;
+        const idNguoiDuyet = req.nguoidung._id;
 
-//         const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
-//         if (!nguoiDuyet) {
-//             return res.status(404).json({ message: "Không tìm thấy người dùng!" });
-//         }
+        const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
+        if (!nguoiDuyet) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+        }
 
-//         if (nguoiDuyet.roleND !== "ADMIN") {
-//             return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
-//         }
+        if (nguoiDuyet.roleND !== "ADMIN") {
+            return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
+        }
 
-//         const dotBauCu = await DotBauCu.findById(id);
-//         if (!dotBauCu) {
-//             return res.status(404).json({ message: "Không tìm thấy đợt bầu cử!" });
-//         }
+        const dotBauCu = await DotBauCu.findById(id);
+        if (!dotBauCu) {
+            return res.status(404).json({ message: "Không tìm thấy đợt bầu cử!" });
+        }
 
-//         if (dotBauCu.trangThai !== "Chờ xét duyệt") {
-//             return res.status(400).json({
-//                 message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
-//             });
-//         }
+        if (dotBauCu.trangThai !== "Chờ xét duyệt") {
+            return res.status(400).json({
+                message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
+            });
+        }
 
-//         dotBauCu.trangThai = trangThaiMoi;
-//         dotBauCu.idNguoiDuyet = idNguoiDuyet;
-//         dotBauCu.thoiGianDuyet = new Date();
+        dotBauCu.trangThai = trangThaiMoi;
+        dotBauCu.idNguoiDuyet = idNguoiDuyet;
+        dotBauCu.thoiGianDuyet = new Date();
 
-//         await dotBauCu.save();
+        await dotBauCu.save();
 
-//         res.status(200).json({
-//             message: "Cập nhật trạng thái thành công!"
-//         });
+        res.status(200).json({
+            message: "Cập nhật trạng thái thành công!"
+        });
 
-//     } catch (error) {
-//         console.error("Lỗi capNhatTrangThaiDot controller:", error.message);
-//         res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
-//     }
-// };
+    } catch (error) {
+        console.error("Lỗi capNhatTrangThaiDot controller:", error.message);
+        res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};

@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext2';
 
 function ElectionPage() {
     const { user } = useAuth();
-    
+
     const navigate = useNavigate();
     const page = 1;
     const tongPages = 1;
@@ -20,12 +20,15 @@ function ElectionPage() {
         tenDotBauCu: "",
         ngayBatDau: "",
         ngayKetThuc: ""
-    }); 
-    
+    });
+
     const [dotBauCuList, setDotBauCuList] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    console.log("đợt bầu cử", dotBauCuList);
+    console.log("user", user);
 
     useEffect(() => {
         const fetchDotBauCu = async () => {
@@ -92,7 +95,7 @@ function ElectionPage() {
 
     
     const handleDelete = async (id) => {
-        const isConfirmed = window.confirm("Bạn có chắc chắn muốn xóa cử tri này?");
+        const isConfirmed = window.confirm("Bạn có chắc chắn muốn xóa đợt bầu cử này?");
         if (!isConfirmed) return;
     
         try {
@@ -127,7 +130,26 @@ function ElectionPage() {
             alert(error.response?.data?.message || "Lỗi khi cập nhật đợt bầu cử!");
         }
     };
-    
+
+    const handleUpdateBDvaKT = async (id, trangThaiMoi) => {
+        const privateKey = prompt("Vui lòng nhập private key để duyệt:");
+        if (!privateKey) {
+            alert("Bạn cần nhập private key để duyệt!");
+            return;
+        }
+        
+        const isConfirmed = window.confirm("Bạn có chắc chắn muốn cập nhật đợt này?");
+        if (!isConfirmed) return;
+        
+        try {
+            const response = await axios.put(`/api/dotbaucu/capnhat/${id}`, { trangThaiMoi, privateKey });
+            alert(response.data.message);
+            window.location.reload();
+        } catch (error) {
+            console.error("Lỗi khi cập nhật:", error);
+            alert(error.response?.data?.message || "Lỗi khi cập nhật đợt bầu cử!");
+        }
+    };
 
     return (
         <MainLayout>
@@ -180,6 +202,22 @@ function ElectionPage() {
                                         hover:bg-red-700 transition-all duration-300 ease-in-out shadow-md"
                                         onClick={() => handleUpdate(election._id, "Từ chối")}>
                                         Từ chối
+                                    </button>
+                                </div>
+                            ) : user?.roleND === "ADMIN" && election.trangThai === "Chưa diễn ra" ? (
+                                <div className="flex gap-1 justify-center items-center">
+                                    <button className="bg-blue-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
+                                        hover:bg-blue-700 transition-all duration-300 ease-in-out shadow-md"
+                                        onClick={() => handleUpdateBDvaKT(election._id, "Đang diễn ra")}>
+                                        Bắt đầu
+                                    </button>
+                                </div>
+                            ) : user?.roleND === "ADMIN" && election.trangThai === "Đang diễn ra" ? (
+                                <div className="flex gap-1 justify-center items-center">
+                                    <button className="bg-gray-600 text-white text-sm font-medium px-2 py-1 rounded-md cursor-pointer 
+                                        hover:bg-gray-700 transition-all duration-300 ease-in-out shadow-md"
+                                        onClick={() => handleUpdateBDvaKT(election._id, "Đã kết thúc")}>
+                                        Kết thúc
                                     </button>
                                 </div>
                             ) : user?._id?.toString() === election?.idNguoiTao?._id?.toString() && 

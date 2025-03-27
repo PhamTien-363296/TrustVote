@@ -17,9 +17,6 @@ const nguoidungSchema = new mongoose.Schema(
             required: true,
             minLength: 6,
 		},
-        anhDaiDienND: {
-			type: String,
-		},
         moTaND: {
 			type: String,
 		},

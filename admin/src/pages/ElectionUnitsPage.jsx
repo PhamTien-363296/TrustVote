@@ -7,10 +7,10 @@ import { useAuth } from "../context/AuthContext2";
 
 function ElectionUnitsPage() {
     const { user } = useAuth();
-    
+
     // const navigate = useNavigate();
     const [donViBauCuList, setDonViBauCuList] = useState([]);
-    
+
     const [moThem, setMoThem] = useState(false);
     // const [moChon, setMoChon] = useState(false);
     const [dotBauCuDaChon, setDotBauCuDaChon] = useState(null);
@@ -22,6 +22,7 @@ function ElectionUnitsPage() {
         tinhThanh: null,
         capHuyen: [],
     });
+
     const [dotBauCuList, setDotBauCuList] = useState([]);
     const [capTinhList, setCapTinhList] = useState([]);
     const [capHuyenList, setCapHuyenList] = useState([]);
@@ -31,6 +32,8 @@ function ElectionUnitsPage() {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    console.log("Tỉnh thành:", capTinhList);
 
     useEffect(() => {
         const layDuLieu = async () => {
@@ -63,7 +66,6 @@ function ElectionUnitsPage() {
     useEffect(() => {
         const layDonViBauCu = async () => {
             if (!dotBauCuDaChon) return;
-    
             try {
                 const donViRes = await axios.get(`/api/donvi/lay/${dotBauCuDaChon._id}`);
                 setDonViBauCuList(donViRes.data);
@@ -71,10 +73,8 @@ function ElectionUnitsPage() {
                 console.error("Lỗi khi tải danh sách đơn vị bầu cử:", err);
             }
         };
-    
         layDonViBauCu();
     }, [dotBauCuDaChon]);
-    
 
     const danhSachLoc = donViBauCuList.filter((donVi) =>
         tinhThanhDaChon ? donVi.capTinh.id === tinhThanhDaChon : true
@@ -83,14 +83,14 @@ function ElectionUnitsPage() {
     const xuLyThayDoiCapTinh = async (e) => {
         const tinhId = e.target.value;
         const tinh = capTinhList.find(t => t.code === parseInt(tinhId));
-    
+
         setDonViBauCu((prev) => ({
             ...prev,
             capTinh: { id: tinhId, name: tinh?.name || "" },
             capHuyen: [],
             capXa: [],
         }));
-    
+
         if (tinhId) {
             try {
                 const response = await axios.get(`https://provinces.open-api.vn/api/p/${tinhId}?depth=2`);
@@ -102,13 +102,13 @@ function ElectionUnitsPage() {
         } else {
             setCapHuyenList([]);
         }
-    };     
-    
+    };
+
     const xuLyChonHuyen = (e) => {
         const selectedOptions = Array.from(e.target.selectedOptions);
         setSelectedHuyen(selectedOptions.map(option => ({ id: option.value, name: option.textContent })));
     };
-    
+
     const themHuyen = async () => {
         setDonViBauCu(prev => ({
             ...prev,
@@ -119,14 +119,12 @@ function ElectionUnitsPage() {
     const handleChange = (e) => {
         setDonViBauCu((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         console.log("Dữ liệu gửi đi", donViBauCu)
-
         try {
             const response = await axios.post("/api/donvi/them", donViBauCu);
-    
             if (response.status === 201) {
                 alert("Thêm đơn vị bầu cử thành công!");
                 setMoThem(false);
@@ -146,13 +144,11 @@ function ElectionUnitsPage() {
             console.error("Lỗi khi gửi dữ liệu:", error);
             alert("Lỗi kết nối đến server!");
         }
-    };   
+    };
 
-    
     const handleDelete = async (id) => {
         const isConfirmed = window.confirm("Bạn có chắc chắn muốn xóa cử tri này?");
         if (!isConfirmed) return;
-    
         try {
             const response = await axios.delete(`/api/donvi/xoa/${id}`);
             alert(response.data.message);
@@ -166,19 +162,16 @@ function ElectionUnitsPage() {
     const handleUpdate = async (id, trangThaiMoi) => {
         const isConfirmed = window.confirm("Bạn có chắc chắn muốn cập nhật đơn vị này?");
         if (!isConfirmed) return;
-    
         const privateKey = prompt("Nhập private key để ký giao dịch:");
         if (!privateKey) {
             alert("Bạn cần nhập private key!");
             return;
         }
-    
         try {
             const response = await axios.put(`/api/donvi/capnhat/${id}`, { 
                 trangThaiMoi, 
                 privateKey 
             });
-    
             alert(response.data.message);
             window.location.reload();
         } catch (error) {
@@ -187,11 +180,9 @@ function ElectionUnitsPage() {
         }
     };
     
-    
     if (loading) return <MainLayout><p>Đang tải...</p></MainLayout>;
-
     if (error) return <p>{error}</p>;
-    
+
     return (
         <MainLayout>
             <div className="w-full h-full p-3">

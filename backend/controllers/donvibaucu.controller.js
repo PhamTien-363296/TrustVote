@@ -8,9 +8,6 @@ import DotBauCu from '../models/dotbaucu.model.js';
 import bcrypt from 'bcryptjs'
 
 import moment from 'moment';
-import { ethers } from "ethers";
-import dotenv from "dotenv";
-import abi from "../abi.js";
 import CuTri from '../models/cutri.model.js';
 import UngCuVien from '../models/ungcuvien.model.js';
 
