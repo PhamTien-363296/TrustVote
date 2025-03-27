@@ -1,5 +1,7 @@
 import DotBauCu from "../models/dotbaucu.model.js";
 import NguoiDung from "../models/nguoidung.model.js";
+import DonViBauCu from "../models/donvibaucu.model.js";
+import UngCuVien from "../models/ungcuvien.model.js";
 import { ethers } from "ethers";
 import moment from "moment";
 import dotenv from "dotenv" 
@@ -191,44 +193,89 @@ export const xoaDotBauCu = async (req, res) => {
     }
 };
 
+
 export const capNhatTrangThaiDot = async (req, res) => {
     try {
         const { id } = req.params;
         const { trangThaiMoi, privateKey } = req.body;
         const idNguoiDuyet = req.nguoidung._id;
 
-        const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
-        if (!nguoiDuyet) {
-            return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+      
+        if (!privateKey) {
+            return res.status(400).json({ message: "Vui lòng nhập private key!" });
         }
 
-        if (nguoiDuyet.roleND !== "ADMIN") {
+     
+        const nguoiDuyet = await NguoiDung.findById(idNguoiDuyet);
+        if (!nguoiDuyet || nguoiDuyet.roleND !== "ADMIN") {
             return res.status(403).json({ message: "Bạn không có quyền cập nhật trạng thái!" });
         }
 
+       
         const dotBauCu = await DotBauCu.findById(id);
         if (!dotBauCu) {
             return res.status(404).json({ message: "Không tìm thấy đợt bầu cử!" });
         }
 
-        if (dotBauCu.trangThai !== "Chờ xét duyệt") {
-            return res.status(400).json({
-                message: "Chỉ có thể cập nhật khi trạng thái là 'Chờ xét duyệt'!",
-            });
+      
+        const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
+        let signer;
+        try {
+            signer = new ethers.Wallet(privateKey, provider);
+        } catch (error) {
+            return res.status(400).json({ message: "Private key không hợp lệ!" });
         }
 
+        const contract = new ethers.Contract(process.env.CONTRACT_ADDRESS, abi, signer);
+
+     
+        if (signer.address.toLowerCase() !== nguoiDuyet.address.toLowerCase()) {
+            return res.status(403).json({ message: "Private key không khớp với tài khoản admin!" });
+        }
+
+   
+        if (!["Đang diễn ra", "Đã kết thúc"].includes(trangThaiMoi)) {
+            return res.status(400).json({ message: "Trạng thái không hợp lệ!" });
+        }
+
+      
         dotBauCu.trangThai = trangThaiMoi;
         dotBauCu.idNguoiDuyet = idNguoiDuyet;
         dotBauCu.thoiGianDuyet = new Date();
-
         await dotBauCu.save();
 
-        res.status(200).json({
-            message: "Cập nhật trạng thái thành công!"
-        });
+       
+        let tx;
+        if (trangThaiMoi === "Đang diễn ra") {
+            tx = await contract.startElection(dotBauCu._id.toString());
+            await UngCuVien.updateMany(
+                { idDotBauCu: id }, 
+                { $set: { trangThai: "Đang diễn ra" } }
+            );
+            await DonViBauCu.updateMany(
+                { idDotBauCu: id }, 
+                { $set: { trangThai: "Đang diễn ra" } }
+            );
+            console.log(` Đã cập nhật trạng thái ứng cử viên của đợt bầu cử ${id}`);
+        } else if (trangThaiMoi === "Đã kết thúc") {
+            tx = await contract.endElection(dotBauCu._id.toString());
+            await UngCuVien.updateMany(
+                { idDotBauCu: id }, 
+                { $set: { trangThai: "Đã kết thúc" } }
+            );
+            await DonViBauCu.updateMany(
+                { idDotBauCu: id }, 
+                { $set: { trangThai: "Đã kết thúc" } }
+            );
+            console.log(`Đã cập nhật trạng thái ứng cử viên của đợt bầu cử ${id}`);
+        }
+
+        if (tx) await tx.wait();
+
+        res.status(200).json({ message: "Cập nhật trạng thái thành công!" });
 
     } catch (error) {
-        console.error("Lỗi capNhatTrangThaiDot controller:", error.message);
+        console.error("Lỗi capNhatTrangThaiDot controller:", error);
         res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
     }
 };
