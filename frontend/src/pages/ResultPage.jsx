@@ -4,25 +4,46 @@ import axios from "axios";
 import { FaUser } from "react-icons/fa";
 
 function ResultPage() {
-    const location = useLocation();
-    const { idDonViBauCu } = location.state || {}; 
     const [matKhau, setMatKhau] = useState("");
     const [hienNhapKey, setHienNhapKey] = useState(true);
     const [winners, setWinners] = useState([]); 
 
-    useEffect(() => {
-        if (!idDonViBauCu) {
-            alert("Không tìm thấy đơn vị bầu cử!");
-        }
-    }, [idDonViBauCu]);
+    const [dotBauCuList, setDotBauCuList] = useState([]);
+    const [dotBauCuDaChon, setDotBauCuDaChon] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
+    console.log(dotBauCuDaChon)
+
+    useEffect(() => {
+        const layDotBauCu = async () => {
+            try {
+                setLoading(true);
+                const res = await axios.get("/api/dotbaucu/lay/daketthuc");
+                setDotBauCuList(res.data);
+
+                if (res.data.length > 0) {
+                    setDotBauCuDaChon(res.data[1]);
+                }
+            } catch (err) {
+                setError("Lỗi khi tải dữ liệu!");
+                console.error("Lỗi API:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        layDotBauCu();
+    }, []);
+    
     const layKetQua = async () => {
         if (!matKhau.trim()) {
             alert("Vui lòng nhập mật khẩu!");
             return;
         }
         try {
-            const res = await axios.get(`/api/donvi/layKetQua?matKhau=${matKhau}&idDonViBauCu=${idDonViBauCu}`);
+            const idDotBauCu = dotBauCuDaChon._id
+            const res = await axios.get(`/api/donvi/layKetQua?matKhau=${matKhau}&idDotBauCu=${idDotBauCu}`);
 
             if (res.data.winners.length === 0) {
                 alert("Chưa có kết quả bầu cử!");
@@ -44,6 +65,23 @@ function ResultPage() {
                 <button className="bg-amber-200 p-3 rounded-full hover:bg-amber-300 transition-all">
                     <FaUser className="text-blue-900 text-lg" />
                 </button>
+            </div>
+            <div className="flex justify-end items-center mb-3 cursor-pointer">
+                <select
+                    className="rounded-full shadow-lg px-4 py-2 border border-blue-950 text-blue-950 font-medium cursor-pointer hover:bg-blue-950 hover:text-white"
+                    value={dotBauCuDaChon?._id || ""}
+                    onChange={(e) => {
+                        const dotBauCuMoi = dotBauCuList.find((d) => d._id === e.target.value);
+                        setDotBauCuDaChon(dotBauCuMoi || null);
+                    }}
+                >
+                    <option value="" disabled>Chọn đợt bầu cử</option>
+                    {dotBauCuList.map((d) => (
+                        <option key={d._id} value={d._id}>
+                            {d.tenDotBauCu}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             <div className="flex-grow p-6">

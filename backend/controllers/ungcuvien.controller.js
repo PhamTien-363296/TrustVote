@@ -298,7 +298,6 @@ export const capNhatTrangThaiUCV = async (req, res) => {
 export const getUngCuVienByCuTri = async (req, res) => {
     try {
         const idCuTri = req.cutri._id;
-        console.log("id cu tri", idCuTri);
 
         const result = await CuTri.aggregate([
             {
@@ -381,3 +380,32 @@ export const getUngCuVienByCuTri = async (req, res) => {
     }
 };
 
+export const getThongTinTrangChu = async (req, res) => { 
+    try {
+        const {idDotBauCu} = req.params; // Lấy idDotBauCu từ request
+
+        // Đếm số đơn vị bầu cử
+        const soDonViBauCu = await DonViBauCu.countDocuments({ idDotBauCu });
+
+        // Đếm số ứng cử viên
+        const soUngCuVien = await UngCuVien.countDocuments({ idDotBauCu });
+
+        // Tổng số đại biểu được bầu
+        const donViBauCuList = await DonViBauCu.find({ idDotBauCu });
+        const soDaiBieu = donViBauCuList.reduce((total, dv) => total + (dv.soDaiBieuDuocBau || 0), 0);
+        console.log(soDaiBieu)
+
+        return res.json({
+            success: true,
+            data: {
+                idDotBauCu,
+                soDonViBauCu,
+                soUngCuVien,
+                soDaiBieu
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        return res.json({ success: false, message: "Lỗi khi lấy thông tin bầu cử" });
+    }
+};

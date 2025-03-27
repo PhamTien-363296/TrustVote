@@ -7,8 +7,7 @@ import moment from "moment";
 function HomePage() {
   const navigate = useNavigate();
   const [matKhau, setMatKhau] = useState("");
-  const [hienNhapKey, setHienNhapKey] = useState(false); // Ẩn/Hiện ô nhập
-
+  const [hienNhapKey, setHienNhapKey] = useState(false);
 
   const [xemDanhSach, setXemDanhSach] = useState(false);
   const [hienBauCu, setHienBauCu] = useState(false);
@@ -17,6 +16,7 @@ function HomePage() {
   const[donViBauCu, setDonViBauCu] = useState(null);
   const[danhSachUngCuVien, setDanhSachUngCuVien] = useState([]);
   const[dotBauCu, setDotBauCu] = useState(null);
+  const[thongTinDotBauCu, setThongTinDotBauCu] = useState(null);
 
   const [daThamGia, setDaThamGia] = useState(false);
 
@@ -34,10 +34,11 @@ function HomePage() {
           setDonViBauCu(response.data.data.donViBauCu || {});
           setDanhSachUngCuVien(response.data.data.ungCuViens || []);
           const idDotBauCu = response.data.data.dotBauCu?._id;
-
           if (idDotBauCu) {
             const response2 = await axios.get(`/api/cutri/kiemtrathamgia?idDotBauCu=${idDotBauCu}`);
             setDaThamGia(response2.data.daThamGia || false);
+            const response3 = await axios.get(`/api/ungcuvien/lay-thongtin-trangchu/${idDotBauCu}`);
+            setThongTinDotBauCu(response3.data.data)
           }
         } else {
           setError("Không có Đợt bầu cử nào Đang diễn ra");
@@ -91,12 +92,7 @@ function HomePage() {
   };
 
   const handleClickKQ = () => {
-    console.log("ID Đơn vị bầu cử:", donViBauCu?._id); // Kiểm tra ID có tồn tại không
-    if (!donViBauCu?._id) {
-      alert("Không tìm thấy ID Đơn vị bầu cử!");
-      return;
-    }
-    navigate("/result", { state: { idDonViBauCu: donViBauCu._id } });
+    navigate("/result");
   };
 
   if (loading) return <div>Đang tải...</div>;
@@ -114,6 +110,12 @@ function HomePage() {
         onClick={() => window.location.reload()}
       >
         Thử lại
+      </button>
+      <button
+        className="cursor-pointer bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-all"
+        onClick={handleClickKQ}
+        >
+        Xem kết quả
       </button>
     </div>
   );
@@ -154,13 +156,13 @@ function HomePage() {
             <h5 className="font-bold text-lg text-blue-800">
               {donViBauCu?.capTinh?.ten} 
               <span className="text-gray-700 font-normal ml-3">
-                SỐ ĐƠN VỊ BẦU CỬ LÀ 10
+                SỐ ĐƠN VỊ BẦU CỬ LÀ {thongTinDotBauCu.soDonViBauCu}
               </span>
             </h5>
 
             <p className="text-gray-600 mt-2">
-              <strong>Số đại biểu Quốc hội được bầu:</strong> 29 người.{" "}
-              <strong>Số người ứng cử:</strong> 49 người.
+              <strong>Số đại biểu Quốc hội được bầu:</strong> {thongTinDotBauCu.soDaiBieu} người.{" "}
+              <strong>Số người ứng cử:</strong> {thongTinDotBauCu.soUngCuVien} người
             </p>
             <p className="text-gray-600">
               <strong>UBBC Tỉnh/Thành phố:</strong> {donViBauCu?.capTinh?.ten} 
@@ -172,14 +174,14 @@ function HomePage() {
                 <h5 className="font-bold text-blue-700">
                   {donViBauCu?.tenDonVi}{": "}
                   <span className="text-gray-700">
-                    Gồm: {donViBauCu?.capHuyen?.map((item) => item.ten).join(", ")}.
+                    Gồm: {donViBauCu?.capHuyen?.map((item) => item.ten).join(", ")}
                   </span>
                 </h5>
                 <p className="text-gray-600">
-                  <strong>Số đại biểu Quốc hội được bầu:</strong> {donViBauCu?.soDaiBieuDuocBau}.
+                  <strong>Số đại biểu Quốc hội được bầu:</strong> {donViBauCu?.soDaiBieuDuocBau}
                 </p>
                 <p className="text-gray-600">
-                  <strong>Số người ứng cử:</strong> {donViBauCu?.danhSachUngCu?.length}.
+                  <strong>Số người ứng cử:</strong> {danhSachUngCuVien?.length}
                 </p>
                 <a className="text-blue-700 font-semibold mt-2 block cursor-pointer hover:underline" onClick={() => setXemDanhSach(!xemDanhSach)}>
                   {xemDanhSach ? "Ẩn danh sách ứng cử viên" : "Xem danh sách ứng cử viên"}

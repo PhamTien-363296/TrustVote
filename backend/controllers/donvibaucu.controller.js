@@ -8,7 +8,7 @@ import CuTri from '../models/cutri.model.js';
 import UngCuVien from '../models/ungcuvien.model.js';
 import dotenv from "dotenv" 
 import abi from "../abi.js";
-
+import mongoose from 'mongoose';
 dotenv.config();
 
 const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
@@ -222,16 +222,46 @@ export const capNhatTrangThaiDonVi = async (req, res) => {
 export const layKetQuaBauCu = async (req, res) => {
     try {
         const idCuTri = req.cutri._id;
-        const { matKhau, idDonViBauCu } = req.query;
+        const { matKhau, idDotBauCu } = req.query;
 
-        if (!idDonViBauCu) {
-            return res.status(400).json({ message: "Thiếu idDonVi" });
+        console.log(idDotBauCu)
+
+        if (!idDotBauCu) {
+            return res.status(400).json({ message: "Thiếu id Đợt bầu cử" });
         }
 
-        const cuTri = await CuTri.findById(idCuTri);
-        if (!cuTri) {
-            return res.status(404).json({ message: "Không tìm thấy cử tri!" });
+        const result = await CuTri.aggregate([
+            {
+                $match: { _id: idCuTri } // Tìm cử tri theo ID
+            },
+            {
+                $lookup: {
+                    from: "DonViBauCu", // Liên kết với đơn vị bầu cử
+                    let: { capTinhId: "$diaChi.capTinh.id", capHuyenId: "$diaChi.capHuyen.id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$capTinh.id", "$$capTinhId"] },
+                                        { $in: ["$$capHuyenId", "$capHuyen.id"] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: "donViBauCu"
+                }
+            },
+            { $unwind: "$donViBauCu" }, // Chuyển đơn vị bầu cử thành object thay vì array
+        ]);
+
+        if (result.length === 0) {
+            return res.status(404).json({ message: "Cử tri không tìm thấy" });
         }
+
+        const cuTri = result[0]; // Lấy thông tin của cử tri
+        const donViBauCu = cuTri.donViBauCu; // Lấy thông tin đơn vị bầu cử
 
         const kiemTra_matKhau = await bcrypt.compare(matKhau, cuTri.matKhau);
         if (!kiemTra_matKhau) {
@@ -252,18 +282,26 @@ export const layKetQuaBauCu = async (req, res) => {
 
         const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-        const winners = await contract.getWinners(idDonViBauCu);
+        const winners = await contract.getWinners(donViBauCu._id.toString(), idDotBauCu.toString());
+
         if (!winners || winners.length === 0) {
             return res.json({ message: "Chưa có kết quả bầu cử!", winners: [] });
         }
+        console.log("Dữ liệu trả về từ getWinners:", winners);
 
-        const danhSachUngCuVien = await UngCuVien.find({ _id: { $in: winners } });
+        const winnerIds = winners[0].map(id => new mongoose.Types.ObjectId(id));
+
+        console.log("Danh sách ID người thắng:", winnerIds);
+
+        const danhSachUngCuVien = await UngCuVien.find({ _id: { $in: winnerIds } });
 
         console.log("Thông tin người thắng:", danhSachUngCuVien);
-        
+
         return res.json({ message: "Lấy kết quả thành công!", winners: danhSachUngCuVien });
+
     } catch (error) {
         console.error("Lỗi khi lấy kết quả bầu cử:", error);
         return res.status(500).json({ message: "Lỗi khi lấy kết quả bầu cử", error: error.message });
     }
 };
+

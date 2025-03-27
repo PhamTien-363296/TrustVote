@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import moment from "moment";
 import dotenv from "dotenv" 
 import abi from "../abi.js";
+import UngCuVien from "../models/ungcuvien.model.js";
 
 dotenv.config();
 
@@ -232,9 +233,27 @@ export const capNhatTrangThaiDot = async (req, res) => {
     }
 };
 
+export const layDotBauCuKetThuc = async (req, res) => {
+    try {
+        const dotBauCuList = await DotBauCu.find({
+            trangThai: { $eq: "Đã kết thúc" }
+        });
+
+        res.status(200).json(dotBauCuList);
+    } catch (error) {
+        res.status(500).json({ message: "Lỗi khi lấy danh sách đợt bầu cử Đã kết thúc!", error });
+    }
+};
+
+import mongoose from "mongoose";
 export const layKetQuaBauCu = async (req, res) => {
     try {
         const { idDotBauCu } = req.params;
+
+        if (!idDotBauCu) {
+            return res.status(400).json({ message: "Thiếu idDotBauCu!" });
+        }
+
         const privateKey = process.env.ADMIN_PRIVATE_KEY;
         if (!privateKey) {
             return res.status(500).json({ message: "Lỗi hệ thống: Không tìm thấy Private Key" });
@@ -248,17 +267,46 @@ export const layKetQuaBauCu = async (req, res) => {
         }
 
         const contract = new ethers.Contract(contractAddress, contractABI, signer);
+        const result = await contract.getElectionWinners(idDotBauCu);
 
-        const winners = await contract.getElectionWinners(idDotBauCu);
-        if (!winners || winners.length === 0) {
-            return res.json({ message: "Chưa có kết quả bầu cử!", winners: [] });
+        const stringData = result[0][0];
+        const numberData = result[1][0];
+        const bytesData = result[2][0];
+
+        console.log("String Data (IDs):", stringData);
+        console.log("Number Data (Scores):", numberData);
+        console.log("Bytes Data:", bytesData);
+
+        let objectIds = [];
+        if (Array.isArray(stringData)) {
+            objectIds = stringData
+                .map(id => id.toString().trim())
+                .filter(id => mongoose.Types.ObjectId.isValid(id))
+                .map(id => new mongoose.Types.ObjectId(id));
         }
 
-        const danhSachUngCuVien = await UngCuVien.find({ _id: { $in: winners } });
+        if (objectIds.length === 0) {
+            return res.json({ message: "Không tìm thấy ứng cử viên hợp lệ!", winners: [] });
+        }
 
-        console.log("Thông tin người thắng:", danhSachUngCuVien);
-        
-        return res.json({ message: "Lấy kết quả thành công!", winners: danhSachUngCuVien });
+        const danhSachUngCuVien = await UngCuVien.find({ _id: { $in: objectIds } });
+
+        if (!danhSachUngCuVien || danhSachUngCuVien.length === 0) {
+            return res.json({ message: "Không tìm thấy thông tin ứng cử viên!", winners: [] });
+        }
+
+        const bytesDataFormatted = bytesData.map(item => item.toString());
+
+        const ketQua = danhSachUngCuVien.map((ungCuVien, index) => ({
+            diemSo: Number(numberData[index]) || 0,
+            bytesData: bytesDataFormatted[index] || "Không có dữ liệu",
+            thongTin: ungCuVien,
+        }));
+
+        console.log("Thông tin người thắng:", ketQua);
+
+        return res.json({ message: "Lấy kết quả thành công!", winners: ketQua });
+
     } catch (error) {
         console.error("Lỗi khi lấy kết quả bầu cử:", error);
         return res.status(500).json({ message: "Lỗi khi lấy kết quả bầu cử", error: error.message });
