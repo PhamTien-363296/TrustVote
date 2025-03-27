@@ -2,10 +2,12 @@ import DonViBauCu from '../models/donvibaucu.model.js';
 import NguoiDung from '../models/nguoidung.model.js';
 import DotBauCu from '../models/dotbaucu.model.js';
 import bcrypt from 'bcryptjs'
-
+import { ethers } from "ethers";
 import moment from 'moment';
 import CuTri from '../models/cutri.model.js';
 import UngCuVien from '../models/ungcuvien.model.js';
+import dotenv from "dotenv" 
+import abi from "../abi.js";
 
 dotenv.config();
 

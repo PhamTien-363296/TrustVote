@@ -283,6 +283,12 @@ const abi =[
 				"internalType": "string",
 				"name": "candidateId",
 				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "ballotHash",
+				"type": "bytes32"
 			}
 		],
 		"name": "VoteCast",
@@ -332,9 +338,9 @@ const abi =[
 				"type": "uint256"
 			},
 			{
-				"internalType": "string",
+				"internalType": "bytes32",
 				"name": "ballotHash",
-				"type": "string"
+				"type": "bytes32"
 			}
 		],
 		"stateMutability": "view",
@@ -551,7 +557,41 @@ const abi =[
 		"inputs": [
 			{
 				"internalType": "string",
+				"name": "_electionId",
+				"type": "string"
+			}
+		],
+		"name": "getElectionWinners",
+		"outputs": [
+			{
+				"internalType": "string[][]",
+				"name": "",
+				"type": "string[][]"
+			},
+			{
+				"internalType": "uint256[][]",
+				"name": "",
+				"type": "uint256[][]"
+			},
+			{
+				"internalType": "bytes32[][][]",
+				"name": "",
+				"type": "bytes32[][][]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
 				"name": "_districtId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_electionId",
 				"type": "string"
 			}
 		],
@@ -561,6 +601,21 @@ const abi =[
 				"internalType": "string[]",
 				"name": "",
 				"type": "string[]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "bytes32[][]",
+				"name": "",
+				"type": "bytes32[][]"
 			}
 		],
 		"stateMutability": "view",
