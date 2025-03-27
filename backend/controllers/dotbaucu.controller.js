@@ -1,12 +1,15 @@
 import DotBauCu from "../models/dotbaucu.model.js";
 import NguoiDung from "../models/nguoidung.model.js";
 import { ethers } from "ethers";
-import abi from "../abi.js"
+import moment from "moment";
+import dotenv from "dotenv" 
+import abi from "../abi.js";
 
-import * as dotenv from "dotenv";
 dotenv.config();
 
-import moment from "moment";
+const provider = new ethers.JsonRpcProvider(process.env.INFURA_API_URL);
+const contractAddress = process.env.CONTRACT_ADDRESS;
+const contractABI = abi; 
 
 export const layDotBauCu = async (req, res) => {
     try {
@@ -226,5 +229,38 @@ export const capNhatTrangThaiDot = async (req, res) => {
     } catch (error) {
         console.error("Lỗi capNhatTrangThaiDot controller:", error.message);
         res.status(500).json({ message: "Lỗi máy chủ!", error: error.message });
+    }
+};
+
+export const layKetQuaBauCu = async (req, res) => {
+    try {
+        const { idDotBauCu } = req.params;
+        const privateKey = process.env.ADMIN_PRIVATE_KEY;
+        if (!privateKey) {
+            return res.status(500).json({ message: "Lỗi hệ thống: Không tìm thấy Private Key" });
+        }
+
+        let signer;
+        try {
+            signer = new ethers.Wallet(privateKey, provider);
+        } catch (error) {
+            return res.status(400).json({ message: "Private Key không hợp lệ!" });
+        }
+
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        const winners = await contract.getElectionWinners(idDotBauCu);
+        if (!winners || winners.length === 0) {
+            return res.json({ message: "Chưa có kết quả bầu cử!", winners: [] });
+        }
+
+        const danhSachUngCuVien = await UngCuVien.find({ _id: { $in: winners } });
+
+        console.log("Thông tin người thắng:", danhSachUngCuVien);
+        
+        return res.json({ message: "Lấy kết quả thành công!", winners: danhSachUngCuVien });
+    } catch (error) {
+        console.error("Lỗi khi lấy kết quả bầu cử:", error);
+        return res.status(500).json({ message: "Lỗi khi lấy kết quả bầu cử", error: error.message });
     }
 };

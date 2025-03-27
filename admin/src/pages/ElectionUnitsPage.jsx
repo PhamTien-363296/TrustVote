@@ -49,6 +49,8 @@ function ElectionUnitsPage() {
                 const dotBauCuMacDinh = dotBauCuRes.data.length > 0 ? dotBauCuRes.data[0] : null;
                 setDotBauCuDaChon(dotBauCuMacDinh);
 
+                console.log(dotBauCuRes.data[0])
+
                 if (dotBauCuMacDinh) {
                     const donViRes = await axios.get(`/api/donvi/lay/${dotBauCuMacDinh._id}`);
                     setDonViBauCuList(donViRes.data);
@@ -122,7 +124,12 @@ function ElectionUnitsPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Dữ liệu gửi đi", donViBauCu)
+        if (!donViBauCu.idDotBauCu && dotBauCuDaChon) {
+            setDonViBauCu((prev) => ({ ...prev, idDotBauCu: dotBauCuDaChon._id }));
+        }
+        
+        //console.log("Dữ liệu gửi đi", donViBauCu)
+
         try {
             const response = await axios.post("/api/donvi/them", donViBauCu);
             if (response.status === 201) {

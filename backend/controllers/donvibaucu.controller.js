@@ -240,7 +240,7 @@ export const layKetQuaBauCu = async (req, res) => {
 
         const privateKey = process.env.VOTER_PRIVATE_KEY;
         if (!privateKey) {
-            return res.status(500).json({ message: "Lỗi hệ thống: Không tìm thấy Private Key trong .env" });
+            return res.status(500).json({ message: "Lỗi hệ thống: Không tìm thấy Private Key" });
         }
 
         let signer;
